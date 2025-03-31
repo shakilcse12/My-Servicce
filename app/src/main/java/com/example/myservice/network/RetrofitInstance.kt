@@ -3,6 +3,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import com.example.myservice.data.constants.Api
 
 // RetrofitInstance.kt
 object RetrofitInstance {
@@ -17,7 +18,7 @@ object RetrofitInstance {
 
     val api: AuthService by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL2)
+            .baseUrl(Api.BASE_URL_AVD)
             .client(client) // Add logging
             .addConverterFactory(GsonConverterFactory.create())
             .build()
