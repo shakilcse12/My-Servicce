@@ -1,4 +1,4 @@
-package com.example.myservice.data
+package com.example.myservice.data.repository
 
 import com.example.myservice.data.model.AuthResponse
 import com.example.myservice.network.AuthService

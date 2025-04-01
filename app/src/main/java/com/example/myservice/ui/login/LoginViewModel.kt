@@ -1,10 +1,8 @@
 package com.example.myservice.ui.login
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myservice.data.AuthRepository
-import com.example.myservice.data.model.AuthResponse
+import com.example.myservice.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

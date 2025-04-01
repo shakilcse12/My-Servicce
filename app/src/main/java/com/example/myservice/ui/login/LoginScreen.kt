@@ -1,6 +1,6 @@
 package com.example.myservice.ui.login
 
-import com.example.myservice.data.AuthRepository
+import com.example.myservice.data.repository.AuthRepository
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -69,7 +69,7 @@ fun LoginScreen(
             if (state.isLoading) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
             } else {
-                Text("Login")
+                Text("Login for Essie and Olivia")
             }
         }
 
