@@ -1,3 +1,4 @@
+package com.example.myservice.ui.admin
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,12 +24,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.myservice.data.model.Invoice
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.myservice.data.repository.AuthRepository
 import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.ui.login.LoginViewModel
+import com.example.myservice.ui.navigation.Screen
 import com.example.myservice.viewmodel.AdminViewModel
 
 // OwnerHomeScreen.kt
@@ -36,8 +42,8 @@ import com.example.myservice.viewmodel.AdminViewModel
 @Composable
 fun AdminHomeScreen(navController: NavController) {
     val viewModel: AdminViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return AdminViewModel(
                     invoiceRepository = InvoiceRepository(
                         RetrofitInstance.invoiceService
@@ -50,7 +56,14 @@ fun AdminHomeScreen(navController: NavController) {
     val context = LocalContext.current
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("All Invoices") }) }
+        topBar = { TopAppBar(title = { Text("All Invoices") }) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                navController.navigate(Screen.CreateInvoice.route)
+            }) {
+                Icon(imageVector = Icons.Filled.Add, contentDescription = "Create Invoice")
+            }
+        }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
             if (viewModel.loading) {
@@ -59,47 +72,17 @@ fun AdminHomeScreen(navController: NavController) {
                 InvoiceList(
                     invoices = invoices,
                     isOwner = true,
-                    onPrint = { invoice -> /* Print logic */ },
-                    onEdit = { invoice -> /* Navigate to edit screen */ }
+                    onPrint = { invoice ->
+                        // Print logic
+                    },
+                    onEdit = { invoice ->
+                        navController.navigate(Screen.EditInvoice.createRoute(invoice.id.toString()))
+                    },
+                    onDetails = { invoice ->
+                        navController.navigate(Screen.InvoiceDetails.createRoute(invoice.id.toString()))
+                    }
                 )
             }
         }
     }
 }
-
-// Common Components
-@Composable
-private fun InvoiceList(
-    invoices: List<Invoice>, // ✅ Ensure invoices is passed correctly
-    isOwner: Boolean,
-    onPrint: (Invoice) -> Unit = {},
-    onEdit: (Invoice) -> Unit = {}
-) {
-    LazyColumn {
-        items(invoices) { invoice -> // ✅ Correct way to iterate over a list
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(invoice.partyId.toString(), style = MaterialTheme.typography.titleMedium)
-                    Text("Total: ${invoice.totalPayableAmount}")
-                    Text("Received: ${invoice.collectedAmount}")
-                    if (isOwner) {
-                        Row {
-                            Button(onClick = { onPrint(invoice) }) { // ✅ Call the provided function
-                                Text("Print")
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Button(onClick = { onEdit(invoice) }) { // ✅ Call the provided function
-                                Text("Edit")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-

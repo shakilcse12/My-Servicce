@@ -25,6 +25,10 @@ class LoginViewModel(
                 if (response.isSuccessful) {
                     response.body()?.let { authResponse ->
                         if (authResponse.success) {
+                            authResponse.data?.token?.let { token ->
+                                // Save token to SharedPreferences via RetrofitInstance
+                                RetrofitInstance.saveToken(token)
+                            }
                             _loginState.value = LoginState(
                                 isSuccess = true,
                                 token = authResponse.data?.token,
