@@ -26,6 +26,7 @@ import com.example.myservice.data.model.Invoice
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +41,10 @@ import com.example.myservice.viewmodel.AdminViewModel
 // OwnerHomeScreen.kt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdminHomeScreen(navController: NavController) {
+fun AdminHomeScreen(
+    onInvoiceClick: (String) -> Unit,  // For navigation to details
+    onCreateInvoice: () -> Unit,       // For FAB navigation
+    onLogout: () -> Unit ) {
     val viewModel: AdminViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
@@ -56,11 +60,23 @@ fun AdminHomeScreen(navController: NavController) {
     val context = LocalContext.current
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("All Invoices") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("All Invoices") },
+                actions = {
+                    Button(
+                        onClick = onLogout,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text("Logout", color = MaterialTheme.colorScheme.onErrorContainer)
+                    }
+                }
+            )
+        },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                navController.navigate(Screen.CreateInvoice.route)
-            }) {
+            FloatingActionButton(onClick = onCreateInvoice ) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "Create Invoice")
             }
         }
@@ -76,10 +92,10 @@ fun AdminHomeScreen(navController: NavController) {
                         // Print logic
                     },
                     onEdit = { invoice ->
-                        navController.navigate(Screen.EditInvoice.createRoute(invoice.id.toString()))
+                        //navController.navigate(Screen.EditInvoice.createRoute(invoice.id.toString()))
                     },
                     onDetails = { invoice ->
-                        navController.navigate(Screen.InvoiceDetails.createRoute(invoice.id.toString()))
+                        onInvoiceClick(invoice.id.toString())
                     }
                 )
             }
