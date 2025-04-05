@@ -72,6 +72,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor")
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.compose.animation)
 
 
     // Testing

@@ -1,5 +1,13 @@
 package com.example.myservice.ui.admin
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -17,7 +25,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -36,43 +48,70 @@ fun MainScreen(
     val childNavController = rememberNavController()
     val navBackStackEntry by childNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    // Bottom bar visibility state
+    var isBottomBarVisible by remember { mutableStateOf(true) }
+    val bottomBarHeight = 80.dp // Adjust based on your actual bottom bar height
 
+    // Convert dp to pixels for animation
+    val bottomBarHeightPx = with(LocalDensity.current) { bottomBarHeight.toPx() }
     Scaffold(
-
-        bottomBar = {
-            BottomAppBar(
-                actions = {
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.List, "Invoices") },
-                        label = { Text("Invoices") },
-                        selected = currentRoute == Screen.AdminHome.route,
-                        onClick = {
-                            childNavController.navigate(Screen.AdminHome.route) {
-                                popUpTo(childNavController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    )
-
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Assessment, "Reports") },
-                        label = { Text("Reports") },
-                        selected = currentRoute == Screen.Reports.route,
-                        onClick = {
-                            childNavController.navigate(Screen.Reports.route) {
-                                popUpTo(childNavController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    )
+        /*floatingActionButton = {
+            AnimatedVisibility(
+                visible = isBottomBarVisible,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it }),
+            ) {
+                FloatingActionButton(
+                    onClick = { parentNavController.navigate(Screen.CreateInvoice.route) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    elevation = FloatingActionButtonDefaults.elevation(8.dp)
+                ) {
+                    Icon(Icons.Default.Add, "Create Invoice")
                 }
-            )
+            }
+        },
+        floatingActionButtonPosition = FabPosition.Center,*/
+        bottomBar = {
+            AnimatedVisibility(
+                visible = isBottomBarVisible,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            ) {
+                BottomAppBar(
+                    modifier = Modifier.height(bottomBarHeight),
+                    actions = {
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.List, "Invoices") },
+                            label = { Text("Invoices") },
+                            selected = currentRoute == Screen.AdminHome.route,
+                            onClick = {
+                                childNavController.navigate(Screen.AdminHome.route) {
+                                    popUpTo(childNavController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
+
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.Assessment, "Reports") },
+                            label = { Text("Reports") },
+                            selected = currentRoute == Screen.Reports.route,
+                            onClick = {
+                                childNavController.navigate(Screen.Reports.route) {
+                                    popUpTo(childNavController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
+                    }
+                )
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -86,11 +125,16 @@ fun MainScreen(
                         parentNavController.navigate(Screen.InvoiceDetails.createRoute(invoiceId))
                     },
                     onCreateInvoice = { parentNavController.navigate(Screen.CreateInvoice.route) },
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    onScroll = { visible -> isBottomBarVisible = visible },
+                    bottomBarHeight = bottomBarHeight
                 )
             }
             composable(Screen.Reports.route) {
-                ReportScreen()
+                ReportScreen(
+                    onBack = { childNavController.popBackStack() },
+                    modifier = Modifier
+                )
             }
         }
     }
