@@ -28,6 +28,46 @@ class AdminViewModel (
         loadAllInvoices()
     }
 
+    /*fun refreshInvoiceList() {
+        loadAllInvoices()
+    }*/
+    //refresh invoice list
+    fun checkForNewInvoices() {
+        Log.d("SHAKIL", "yep this luanched is getting called");
+        viewModelScope.launch {
+            try {
+                val response = invoiceRepository.getAllInvoices()
+                if (response.isSuccessful) {
+                    response.body()?.let { invoiceResponse ->
+                        if (invoiceResponse.success) {
+                            val newList = invoiceResponse.data.orEmpty()
+                            if (newList.isNotEmpty()) {
+                                val currentIds = _invoices.map { it.id }.toSet()
+                                val newInvoices = newList.filter { it.id !in currentIds }
+
+                                // Add new invoices to the top
+                                if (newInvoices.isNotEmpty()) {
+                                    Log.d("SHAKIL", "yep new invoices are found");
+                                    _invoices.addAll(0, newInvoices)
+                                } else {
+                                    Log.d("SHAKIL", "..no new invoices are found");
+                                }
+                            } else {
+                                Log.d("SHAKIL", ".....no new invoices are found may be newList is empty");
+                            }
+                        } else {
+                            Log.d("AdminViewModel", "Check failed: ${invoiceResponse.message}")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("AdminViewModel", "Error checking new invoices", e)
+            }
+        }
+    }
+
+
+
     private fun loadAllInvoices() {
         viewModelScope.launch {
             _loading.value = true

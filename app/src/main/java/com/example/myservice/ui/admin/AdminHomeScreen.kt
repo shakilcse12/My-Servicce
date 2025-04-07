@@ -1,4 +1,5 @@
 package com.example.myservice.ui.admin
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -89,6 +90,7 @@ fun AdminHomeScreen(
     }
     // Force show bottom bar initially by delaying the check
     LaunchedEffect(Unit) {
+        viewModel.checkForNewInvoices()
         onScroll(true) // Force visible on initial load
     }
 
