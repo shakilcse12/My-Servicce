@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.myservice"
-        minSdk = 24  // Changed from 35 for better compatibility
+        minSdk = 26  // Changed from 35 for better compatibility
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

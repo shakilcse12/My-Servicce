@@ -45,6 +45,9 @@ data class Invoice(
     @SerializedName("isUpdatable")
     val isUpdatable: Int,
 
+    @SerializedName("party")
+    val party: Party,
+
     val error: String? = null,
 )
 

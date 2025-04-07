@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.myservice.ui.admin.InvoiceDetailsScreen
 import com.example.myservice.ui.admin.MainScreen
+import com.example.myservice.ui.common.CreateInvoiceScreen
 import com.example.myservice.ui.login.LoginScreen
 
 sealed class Screen(val route: String) {
@@ -54,6 +55,13 @@ fun MyServiceAppNavigation() {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(Screen.CreateInvoice.route) {
+            CreateInvoiceScreen(
+                onSuccess = { navController.popBackStack() },
+                onCancel = { navController.popBackStack() }
             )
         }
         //composable(Screen.SalesRepHome.route) { SalesRepHomeScreen(navController) }

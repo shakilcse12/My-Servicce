@@ -1,7 +1,8 @@
 package com.example.myservice.data.constants
 
 object Api {
-    const val BASE_URL = "http://192.168.1.10:8000/"
+    const val BASE_URL = "http://192.168.1.102:8000/"
+    const val BASE_URL2 = "http://192.168.0.101:8000/"
     const val BASE_URL_AVD = "http://10.0.2.2:8000/"
     // Change this to your local server IP
     //const val LOGIN_ENDPOINT = "login"
