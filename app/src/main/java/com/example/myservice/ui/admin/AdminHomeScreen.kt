@@ -1,6 +1,19 @@
 package com.example.myservice.ui.admin
 import android.util.Log
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,8 +30,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.LineHeightStyle.Alignment.*
 import androidx.compose.ui.unit.dp
@@ -27,7 +38,6 @@ import androidx.navigation.NavController
 import com.example.myservice.data.model.Invoice
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -41,7 +51,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.myservice.data.repository.AuthRepository
@@ -49,6 +58,8 @@ import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.ui.login.LoginViewModel
 import com.example.myservice.ui.navigation.Screen
 import com.example.myservice.viewmodel.AdminViewModel
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
 
 // OwnerHomeScreen.kt
@@ -116,6 +127,7 @@ fun AdminHomeScreen(
                 previousOffset = offset
             }
     }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -133,31 +145,44 @@ fun AdminHomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreateInvoice ) {
+            FloatingActionButton(onClick = onCreateInvoice) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "Create Invoice")
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (viewModel.loading) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            } else {
-                InvoiceList(
-                    listState = listState,
-                    invoices = invoices,
-                    isOwner = true,
-                    onPrint = { invoice ->
-                        // Print logic
-                    },
-                    onEdit = { invoice ->
-                        //navController.navigate(Screen.EditInvoice.createRoute(invoice.id.toString()))
-                    },
-                    onDetails = { invoice ->
-                        onInvoiceClick(invoice.id.toString())
-                    },
-                    modifier = Modifier.fillMaxSize()
-                    //modifier = Modifier.padding(bottom = bottomBarHeight)
-                )
+        Box(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = viewModel.loading)
+
+            SwipeRefresh(
+                state = swipeRefreshState,
+                onRefresh = { viewModel.checkForNewInvoices() }
+            ) {
+                if (viewModel.loading && invoices.isEmpty()) {
+                    Box(Modifier.fillMaxSize()) {
+                        CircularProgressIndicator(Modifier.align(Alignment.Center)) // ✅ Now inside a Box
+                    }
+                } else {
+                    InvoiceList(
+                        listState = listState,
+                        invoices = invoices,
+                        isOwner = true,
+                        onPrint = { invoice ->
+                            // Print logic
+                        },
+                        onEdit = { invoice ->
+                            //navController.navigate(Screen.EditInvoice.createRoute(invoice.id.toString()))
+                        },
+                        onDetails = { invoice ->
+                            onInvoiceClick(invoice.id.toString())
+                        },
+                        modifier = Modifier.fillMaxSize()
+                        //modifier = Modifier.padding(bottom = bottomBarHeight)
+                    )
+                }
             }
         }
     }

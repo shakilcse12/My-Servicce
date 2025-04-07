@@ -1,4 +1,5 @@
 [versions]
+accompanistSwiperefresh = "0.32.0"
 agp = "8.3.2"  # Android Gradle Plugin (latest stable)
 kotlin = "1.9.23"  # Match Compose compiler
 coreKtx = "1.13.1"
@@ -12,6 +13,7 @@ materialIconsExtended = "1.6.3"
 
 [libraries]
 # Core
+accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanistSwiperefresh" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 
 # Compose
@@ -23,6 +25,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version = "1.9.0" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version = "2.7.7" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version = "2.7.0" }
+
 # Material Icons Extended
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-compose-animation = { group = "androidx.compose.animation", name = "animation", version = "1.6.6"}# Retrofit

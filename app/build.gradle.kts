@@ -64,6 +64,7 @@ dependencies {
     // Retrofit
     implementation(libs.squareup.retrofit2.retrofit)
     implementation(libs.squareup.retrofit2.converter.gson)
+    implementation(libs.accompanist.swiperefresh)
 
 
     // OkHttp BOM
