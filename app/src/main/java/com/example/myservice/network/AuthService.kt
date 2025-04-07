@@ -4,9 +4,12 @@ import CreateInvoiceRequest
 import com.example.myservice.data.constants.Api
 import com.example.myservice.data.model.AuthResponse
 import com.example.myservice.data.model.Invoice
+import com.example.myservice.data.model.InvoiceCreateResponse
 import com.example.myservice.data.model.InvoiceResponse
 import com.example.myservice.data.model.Party
+import com.example.myservice.data.model.PartyResponse
 import com.example.myservice.data.model.Product
+import com.example.myservice.data.model.ProductResponse
 import retrofit2.http.*
 import retrofit2.Response
 
@@ -22,11 +25,16 @@ interface InvoiceService {
     @GET(Api.Endpoints.INVOICES)
     suspend fun getAllInvoices(): Response<InvoiceResponse>
 
+    @POST(Api.Endpoints.INVOICE_CREATE)
+    suspend fun createInvoice(@Body invoice: CreateInvoiceRequest): Response<InvoiceCreateResponse>
+
+    @GET(Api.Endpoints.PRODUCTS)
+    suspend fun getProducts(): Response<ProductResponse>
+
+    @GET(Api.Endpoints.PARTIES)
+    suspend fun getParties(): Response<PartyResponse>
     /*@GET("invoices/{id}")
     suspend fun getInvoice(@Path("id") invoiceId: String): Response<Invoice>
-
-    @POST("invoices")
-    suspend fun createInvoice(@Body invoice: CreateInvoiceRequest): Response<Invoice>
 
     @PUT("invoices/{id}")
     suspend fun updateInvoice(
@@ -38,16 +46,14 @@ interface InvoiceService {
 
 // ProductService.kt
 interface ProductService {
-    @GET("products")
-    suspend fun getProducts(): Response<List<Product>>
+
 }
 
 // PartyService.kt
 interface PartyService {
-    @GET("parties")
-    suspend fun getParties(): Response<List<Party>>
 
-    @POST("parties")
+
+    @POST(Api.Endpoints.PARTIES)
     suspend fun createParty(@Body party: Party): Response<Party>
 }
 

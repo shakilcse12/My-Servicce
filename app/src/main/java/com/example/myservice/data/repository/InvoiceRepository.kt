@@ -1,8 +1,10 @@
 package com.example.myservice.data.repository
 
-import com.example.myservice.data.model.AuthResponse
-import com.example.myservice.data.model.Invoice
+import CreateInvoiceRequest
+import com.example.myservice.data.model.InvoiceCreateResponse
 import com.example.myservice.data.model.InvoiceResponse
+import com.example.myservice.data.model.PartyResponse
+import com.example.myservice.data.model.ProductResponse
 import com.example.myservice.network.InvoiceService
 import retrofit2.Response
 
@@ -11,5 +13,17 @@ class InvoiceRepository(private val invoiceService: InvoiceService) {
     // Return raw Retrofit response instead of Result
     suspend fun getAllInvoices() : Response<InvoiceResponse> {
         return invoiceService.getAllInvoices()
+    }
+
+    suspend fun getProducts() : Response<ProductResponse> {
+        return invoiceService.getProducts()
+    }
+
+    suspend fun getParties() : Response<PartyResponse> {
+        return invoiceService.getParties()
+    }
+
+    suspend fun createInvoice(createInvoiceRequest: CreateInvoiceRequest) : Response<InvoiceCreateResponse> {
+        return invoiceService.createInvoice(createInvoiceRequest)
     }
 }

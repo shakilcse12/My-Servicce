@@ -8,7 +8,9 @@ object Api {
     object Endpoints {
         const val LOGIN = "api/login"
         const val INVOICES = "api/sales"
+        const val INVOICE_CREATE = "api/sales/create"
         const val PRODUCTS = "api/products"
         const val PARTIES = "api/parties"
+        const val PARTIY_CREATE = "api/party/create"
     }
 }
