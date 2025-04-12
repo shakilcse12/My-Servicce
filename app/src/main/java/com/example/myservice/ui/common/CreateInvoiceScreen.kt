@@ -2,9 +2,13 @@ package com.example.myservice.ui.common
 
 // CreateInvoiceScreen.kt
 import android.annotation.SuppressLint
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -21,6 +25,7 @@ import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.viewmodel.AdminViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import androidx.compose.material.icons.filled.CalendarToday
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,7 +141,119 @@ fun CreateInvoiceScreen(
     }
 }
 
+
+
+@OptIn(ExperimentalMaterial3Api::class) // Needed for ExposedDropdownMenuBox
 @Composable
+private fun DropdownMenuField(
+    label: String,
+    items: List<DropdownItem>,
+    selectedItem: DropdownItem?,
+    onItemSelected: (DropdownItem) -> Unit,
+    loading: Boolean,
+    error: String?
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    // Use a Column to place the Box and the error message correctly
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = expanded && !loading, // Menu opens only if not loading
+            onExpandedChange = {
+                // Let ExposedDropdownMenuBox handle toggling on click,
+                // but prevent opening if loading. Dismiss always works.
+                if (!loading || expanded) { // Allow closing even if loading started after opening
+                    expanded = !expanded
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // The OutlinedTextField acts as the anchor and display area
+            OutlinedTextField(
+                value = selectedItem?.name ?: "",
+                onValueChange = { /* No op */ }, // Input is read-only
+                readOnly = true, // Essential for ExposedDropdownMenuBox to handle clicks
+                label = { Text(label) },
+                trailingIcon = {
+                    if (loading) {
+                        CircularProgressIndicator(Modifier.size(24.dp))
+                    } else {
+                        // Standard practice: Use ExposedDropdownMenuDefaults.TrailingIcon
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    }
+                },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors( // Use specific defaults
+                    // You can still customize colors here if needed, e.g.,
+                    // disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    // disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    // disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    // ...etc
+                ),
+                // **Crucial:** This modifier connects the TextField to the ExposedDropdownMenuBox
+                // and allows the box to handle clicks on the TextField area.
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+
+            // This is the actual menu content
+            ExposedDropdownMenu(
+                expanded = expanded && !loading, // Show menu only if expanded and not loading
+                onDismissRequest = { expanded = false }, // Close when clicking outside
+                modifier = Modifier
+                    // Remove .fillMaxWidth() from menu itself, Box handles width
+                    .background(Color.Black) // Keep the black background
+            ) {
+                items.forEach { item ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = item.name,
+                                color = Color.White, // Keep white text on black background
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        },
+                        onClick = {
+                            onItemSelected(item)
+                            expanded = false // Close menu on item selection
+                        },
+                        // Apply padding provided by ExposedDropdownMenuDefaults
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    )
+                }
+                // Handle empty list case inside the menu if desired
+                if (!loading && items.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("No items available", color = Color.Gray) },
+                        onClick = { expanded = false }, // Just dismiss
+                        enabled = false // Make it non-interactive
+                    )
+                }
+            }
+        } // End ExposedDropdownMenuBox
+
+        // Display error message below the dropdown box
+        if (error != null) {
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+    } // End Column
+}
+
+// Keep other parts of your CreateInvoiceScreen.kt the same
+// ... (CreateInvoiceScreen, NumberInputField, DatePickerField, DropdownItem data class) ...
+
+// Keep other parts of your CreateInvoiceScreen.kt the same
+// ... (CreateInvoiceScreen, NumberInputField, DatePickerField, DropdownItem data class) ...
+/*@Composable
 private fun DropdownMenuField(
     label: String,
     items: List<DropdownItem>,
@@ -158,6 +275,7 @@ private fun DropdownMenuField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { expanded = true }
+                    .background(Color.White)
             ) {
                 OutlinedTextField(
                     value = selectedItem?.name ?: "",
@@ -184,7 +302,7 @@ private fun DropdownMenuField(
             if (error != null) {
                 Text(
                     text = error,
-                    color = MaterialTheme.colorScheme.error,
+                    color = Color.Black,
                     modifier = Modifier.padding(start = 16.dp, top = 4.dp)
                 )
             }
@@ -194,12 +312,16 @@ private fun DropdownMenuField(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier.fillMaxWidth()
+                // override the menu background:
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+
         ) {
             items.forEach { item ->
                 DropdownMenuItem(
                     text = {
                         Text(
                             text = item.name,
+                            color = Color.Black,
                             modifier = Modifier.fillMaxWidth()
                         )
                     },
@@ -211,7 +333,8 @@ private fun DropdownMenuField(
             }
         }
     }
-}
+}*/
+
 @Composable
 private fun NumberInputField(
     label: String,
@@ -232,7 +355,110 @@ private fun NumberInputField(
     )
 }
 
+// Add this import if you don't have it
+ // For trailing icon
+
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("NewApi")
+@Composable
+private fun DatePickerField(
+    selectedDate: String,
+    onDateSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    // Consider making the formatter a remember {} constant if reused often
+    val dateFormatter = remember { DateTimeFormatter.ISO_DATE }
+
+    // Use a Box to contain the visual TextField and the clickable overlay
+    Box(
+        modifier = modifier // Apply the modifier passed to this function here
+            .padding(vertical = 8.dp) // Apply padding here if needed, or outside
+    ) {
+        // 1. The visual OutlinedTextField (non-interactive)
+        OutlinedTextField(
+            value = selectedDate,
+            onValueChange = {}, // Not directly editable
+            readOnly = true,    // Mark as read-only
+            label = { Text("Date") },
+            // Add a trailing icon as a visual cue that it's clickable/interactive
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = "Select Date"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(), // Fill width within the Box
+            // Prevent the TextField itself from handling interactions or showing ripple
+            interactionSource = remember { MutableInteractionSource() }
+            // Optional: Customize colors for readOnly state if needed
+        )
+
+        // 2. Transparent Clickable Overlay
+        // This Box sits on top of the OutlinedTextField
+        Box(
+            modifier = Modifier
+                .matchParentSize() // Makes this Box cover the OutlinedTextField
+                .clickable(
+                    // Indicate the purpose of the click clearly
+                    onClickLabel = "Select Date",
+                    onClick = { showDatePicker = true }, // Action to show the dialog
+                    // Disable ripple effect for the transparent overlay itself
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                )
+        )
+    } // End of container Box
+
+    // --- Date Picker Dialog Logic (remains mostly the same) ---
+    if (showDatePicker) {
+        // Remember state for the DatePicker Dialog
+        val datePickerState = rememberDatePickerState(
+            // Optionally initialize with the currently selected date
+            initialSelectedDateMillis = try {
+                if (selectedDate.isNotEmpty()) {
+                    LocalDate.parse(selectedDate, dateFormatter)
+                        .atStartOfDay(java.time.ZoneOffset.UTC) // Use UTC or system default ZoneId
+                        .toInstant()
+                        .toEpochMilli()
+                } else null
+            } catch (e: Exception) { null /* Handle parse error */ }
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Get selected millis, default to current date if null? Optional.
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            // Convert millis to LocalDate using UTC epoch day
+                            val localDate = java.time.Instant.ofEpochMilli(selectedMillis)
+                                .atZone(java.time.ZoneOffset.UTC) // Use UTC Zone
+                                .toLocalDate()
+                            onDateSelected(localDate.format(dateFormatter))
+                        }
+                        showDatePicker = false
+                    }
+                ) { Text("OK") }
+            },
+            // Add a dismiss button for better UX
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+// Rest of your CreateInvoiceScreen.kt remains the same
+// ... (CreateInvoiceScreen, DropdownMenuField, NumberInputField, DropdownItem data class) ...
+
+/*@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("NewApi")
 @Composable
 private fun DatePickerField(
@@ -272,6 +498,6 @@ private fun DatePickerField(
             DatePicker(state = datePickerState)
         }
     }
-}
+}*/
 
 data class DropdownItem(val id: Int, val name: String)
