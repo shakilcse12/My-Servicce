@@ -2,13 +2,19 @@ package com.example.myservice.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.Recomposer
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myservice.data.model.Invoice
+import com.example.myservice.data.model.Party
 import com.example.myservice.data.repository.InvoiceRepository
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
 
 // AdminViewModel.kt
 class AdminViewModel (
@@ -23,6 +29,58 @@ class AdminViewModel (
     private val _loading = mutableStateOf(false)
     val loading: Boolean get() = _loading.value
 
+    // New filter states
+    private val _parties = mutableStateListOf<Party>()
+    val parties: List<Party> get() = _parties
+
+    var selectedParty by mutableStateOf<Party?>(null)
+
+    var selectedStartDate by mutableStateOf<String?>(null)
+
+    var selectedEndDate by mutableStateOf<String?>(null)
+
+    val filteredInvoices = derivedStateOf {
+        val currentParty = selectedParty
+        val startDate = selectedStartDate?.toLocalDateOrNull()
+        val endDate = selectedEndDate?.toLocalDateOrNull()
+
+        _invoices.filter { invoice ->
+            val partyMatch = currentParty?.let { invoice.partyId.toString() == it.id.toString() } ?: true
+            val dateMatch = when {
+                startDate != null && endDate != null ->
+                    invoice.date.toLocalDateOrNull()!! in startDate..endDate
+                startDate != null ->
+                    invoice.date.toLocalDateOrNull()?.isAfter(startDate) ?: false
+                endDate != null ->
+                    invoice.date.toLocalDateOrNull()?.isBefore(endDate) ?: false
+                else -> true
+            }
+            partyMatch && dateMatch
+        }
+    }
+
+    // --- Add functions to update the filter states ---
+    fun updateSelectedParty(party: Party?) {
+        selectedParty = party
+    }
+
+    fun updateSelectedStartDate(date: String?) {
+        // Optional: Add validation if needed
+        selectedStartDate = date
+    }
+
+    fun updateSelectedEndDate(date: String?) {
+        // Optional: Add validation if needed
+        selectedEndDate = date
+    }
+
+    // Filter management
+    fun clearFilters() {
+        selectedParty = null
+        selectedStartDate = null
+        selectedEndDate = null
+    }
+
     fun selectInvoice(invoice: Invoice) {
         _selectedInvoice.value = invoice
     }
@@ -31,6 +89,27 @@ class AdminViewModel (
 
     init {
         loadAllInvoices()
+        loadParties()
+    }
+
+    private fun loadParties() {
+        viewModelScope.launch {
+            try {
+                val response = invoiceRepository.getParties()
+                if (response.isSuccessful) {
+                    response.body()?.let { partyResponse ->
+                        if (partyResponse.success) {
+                            _parties.clear()
+                            partyResponse.parties.let { party ->
+                                _parties.addAll(party)
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("AdminViewModel", "Error loading parties", e)
+            }
+        }
     }
 
     /*fun refreshInvoiceList() {
@@ -100,6 +179,8 @@ class AdminViewModel (
             }
         }
     }
+
+
 /*
     fun loadInvoiceDetails(invoiceId: String) {
         viewModelScope.launch {
@@ -137,3 +218,15 @@ class AdminViewModel (
     }
     */
 }
+
+// Helper extensions for date handling
+private fun String?.toLocalDateOrNull(): LocalDate? = try {
+    this?.let { LocalDate.parse(it) }
+} catch (e: DateTimeParseException) {
+    null
+}
+
+private fun LocalDate?.isInRange(start: LocalDate, end: LocalDate): Boolean {
+    return this != null && (this >= start && this <= end)
+}
+

@@ -13,6 +13,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.myservice.data.model.Invoice
@@ -20,7 +21,7 @@ import com.example.myservice.data.model.Invoice
 @Composable
 fun InvoiceList(
     listState: LazyListState,
-    invoices: List<Invoice>,
+    invoices: State<List<Invoice>>,
     isOwner: Boolean,
     onPrint: (Invoice) -> Unit = {},
     onEdit: (Invoice) -> Unit = {},
@@ -33,7 +34,7 @@ fun InvoiceList(
             .fillMaxSize() // Take full available space
             .padding(horizontal = 16.dp)
     ) {
-        items(invoices) { invoice ->
+        items(invoices.value) { invoice ->
             Card (
                 modifier = Modifier
                     .fillMaxWidth()

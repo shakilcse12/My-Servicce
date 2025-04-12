@@ -1,14 +1,10 @@
 package com.example.myservice.ui.admin
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -16,29 +12,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.LineHeightStyle.Alignment.*
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.example.myservice.data.model.Invoice
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -51,16 +35,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import com.example.myservice.data.repository.AuthRepository
+import com.example.myservice.data.model.Party
 import com.example.myservice.data.repository.InvoiceRepository
-import com.example.myservice.ui.login.LoginViewModel
-import com.example.myservice.ui.navigation.Screen
 import com.example.myservice.viewmodel.AdminViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
+import com.example.myservice.ui.components.DatePickerDialog
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 // OwnerHomeScreen.kt
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,6 +110,9 @@ fun AdminHomeScreen(
                 previousOffset = offset
             }
     }
+    // Date picker states
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -150,12 +136,38 @@ fun AdminHomeScreen(
             }
         }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
         ) {
             val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = viewModel.loading)
+            // Filter Section
+            FilterSection(
+                viewModel = viewModel,
+                onStartDateSelected = { showStartDatePicker = true },
+                onEndDateSelected = { showEndDatePicker = true }
+            )
+            // Date Pickers
+            DatePickerDialog(
+                showDialog = showStartDatePicker,
+                initialDate = viewModel.selectedStartDate?.toLocalDate() ?: LocalDate.now(),
+                onDateSelected = {
+                    viewModel.updateSelectedStartDate(it.toString())
+                    showStartDatePicker = false
+                },
+                onDismiss = { showStartDatePicker = false }
+            )
+
+            DatePickerDialog(
+                showDialog = showEndDatePicker,
+                initialDate = viewModel.selectedEndDate?.toLocalDate() ?: LocalDate.now(),
+                onDateSelected = {
+                    viewModel.updateSelectedEndDate(it.toString())
+                    showEndDatePicker = false
+                },
+                onDismiss = { showEndDatePicker = false }
+            )
 
             SwipeRefresh(
                 state = swipeRefreshState,
@@ -168,7 +180,7 @@ fun AdminHomeScreen(
                 } else {
                     InvoiceList(
                         listState = listState,
-                        invoices = invoices,
+                        invoices = viewModel.filteredInvoices,
                         isOwner = true,
                         onPrint = { invoice ->
                             // Print logic
@@ -185,5 +197,114 @@ fun AdminHomeScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun FilterSection(
+    viewModel: AdminViewModel,
+    onStartDateSelected: () -> Unit,
+    onEndDateSelected: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp), // Reduced vertical padding
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Party Filter
+        PartyDropdown(
+            parties = viewModel.parties,
+            selectedParty = viewModel.selectedParty,
+            onPartySelected = { viewModel.selectedParty = it }
+        )
+
+        // Date Range Filter
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            DateFilterButton(
+                label = "Start Date",
+                date = viewModel.selectedStartDate,
+                onClick = onStartDateSelected
+            )
+            DateFilterButton(
+                label = "End Date",
+                date = viewModel.selectedEndDate,
+                onClick = onEndDateSelected
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PartyDropdown(
+    parties: List<Party>,
+    selectedParty: Party?,
+    onPartySelected: (Party?) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        TextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            readOnly = true,
+            value = selectedParty?.businessName ?: "All Parties",
+            onValueChange = {},
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("All Parties") },
+                onClick = {
+                    onPartySelected(null)
+                    expanded = false
+                }
+            )
+            parties.forEach { party ->
+                DropdownMenuItem(
+                    text = { Text(party.businessName) },
+                    onClick = {
+                        onPartySelected(party)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DateFilterButton(
+    label: String,
+    date: String?,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick
+    ) {
+        Text(text = date?.let {
+            LocalDate.parse(it).format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+        } ?: label)
+    }
+}
+
+// Extension function for String to LocalDate conversion
+fun String?.toLocalDate(): LocalDate? = this?.let {
+    try {
+        LocalDate.parse(it)
+    } catch (e: Exception) {
+        null
     }
 }
