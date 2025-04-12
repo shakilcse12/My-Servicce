@@ -122,7 +122,7 @@ fun MainScreen(
             composable(Screen.AdminHome.route) {
                 AdminHomeScreen(
                     onInvoiceClick = { invoiceId ->
-                        parentNavController.navigate(Screen.InvoiceDetails.createRoute(invoiceId))
+                        parentNavController.navigate(Screen.InvoiceDetails.createRoute(invoiceId.toString()))
                     },
                     onCreateInvoice = { parentNavController.navigate(Screen.CreateInvoice.route) },
                     onLogout = onLogout,

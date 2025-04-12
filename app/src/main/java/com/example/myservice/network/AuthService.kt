@@ -6,6 +6,7 @@ import com.example.myservice.data.model.AuthResponse
 import com.example.myservice.data.model.Invoice
 import com.example.myservice.data.model.InvoiceCreateResponse
 import com.example.myservice.data.model.InvoiceResponse
+import com.example.myservice.data.model.InvoiceResponseSingle
 import com.example.myservice.data.model.Party
 import com.example.myservice.data.model.PartyResponse
 import com.example.myservice.data.model.Product
@@ -24,6 +25,9 @@ interface AuthService {
 interface InvoiceService {
     @GET(Api.Endpoints.INVOICES)
     suspend fun getAllInvoices(): Response<InvoiceResponse>
+
+    @GET(Api.Endpoints.INVOICE_DETAILS)
+    suspend fun getInvoiceDetailsById(@Path("invoiceId") invoiceId: String) : Response<InvoiceResponseSingle>  // Add Path parameter annotation): Response<InvoiceResponseSingle>
 
     @POST(Api.Endpoints.INVOICE_CREATE)
     suspend fun createInvoice(@Body invoice: CreateInvoiceRequest): Response<InvoiceCreateResponse>
@@ -51,8 +55,6 @@ interface ProductService {
 
 // PartyService.kt
 interface PartyService {
-
-
     @POST(Api.Endpoints.PARTIES)
     suspend fun createParty(@Body party: Party): Response<Party>
 }

@@ -48,6 +48,9 @@ data class Invoice(
     @SerializedName("party")
     val party: Party,
 
+    @SerializedName("product")
+    val product: Product? = null,
+
     val error: String? = null,
 )
 

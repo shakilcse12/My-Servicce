@@ -42,13 +42,13 @@ fun InvoiceList(
                 androidx.compose.foundation.layout.Column(modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)) {
-                    Text(invoice.partyId.toString(), style = MaterialTheme.typography.titleMedium)
+                    Text(invoice.party.businessName, style = MaterialTheme.typography.titleMedium)
                     Text("Total: ${invoice.totalPayableAmount}")
                     Text("Received: ${invoice.collectedAmount}")
                     if (isOwner) {
                         Row {
                             Button(onClick = { onPrint(invoice) }) {
-                                Text("Print")
+                                Text("Collection")
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(onClick = { onEdit(invoice) }) {

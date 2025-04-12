@@ -2,22 +2,34 @@ package com.example.myservice.ui.navigation
 
 import RetrofitInstance
 import android.util.Log
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.ui.admin.InvoiceDetailsScreen
 import com.example.myservice.ui.admin.MainScreen
 import com.example.myservice.ui.common.CreateInvoiceScreen
 import com.example.myservice.ui.login.LoginScreen
+import com.example.myservice.viewmodel.SingleInvoiceViewModel
 
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
@@ -42,12 +54,6 @@ fun MyServiceAppNavigation() {
         navController = navController,
         startDestination = if (authState) Screen.MainScreen.route else Screen.Login.route
     ) {
-
-        /*composable(Screen.Login.route) {
-            LoginScreen(onLoginSuccess = {
-                navController.navigate(Screen.AdminHome.route)
-            })
-        }*/
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
@@ -64,13 +70,11 @@ fun MyServiceAppNavigation() {
                 onCancel = { navController.popBackStack() }
             )
         }
+
         //composable(Screen.SalesRepHome.route) { SalesRepHomeScreen(navController) }
         //composable(Screen.CreateInvoice.route) { CreateInvoiceScreen(navController) }
         //composable(Screen.AdminHome.route) { AdminHomeScreen(navController) }
         // Instead of directly calling AdminHomeScreen, we now use MainScreen
-        /*composable(Screen.AdminHome.route) {
-            MainScreen()
-        }*/
 
         composable(Screen.MainScreen.route) {
             MainScreen(
@@ -98,26 +102,17 @@ fun MyServiceAppNavigation() {
             val invoiceId = backStackEntry.arguments?.getString("invoiceId")
             InvoiceDetailsScreen(navController, invoiceId)
         }*/
+
         composable(
             route = Screen.InvoiceDetails.route,
             arguments = listOf(navArgument("invoiceId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val invoiceId = backStackEntry.arguments?.getString("invoiceId") ?: ""
-            InvoiceDetailsScreen(navController, invoiceId)
+        val invoiceId = backStackEntry.arguments?.getString("invoiceId")
+            InvoiceDetailsScreen(navController = navController, invoiceId.toString())
         }
     }
-}
 
-fun getStartDestination() : String {
-    var dest: String? = RetrofitInstance.getToken()
 
-    if (dest != null) {
-        Log.d("SHAKIL", dest)
-    } else {
-        Log.d("SHAKIL", "token null found")
-    }
-    if(dest != null) return Screen.AdminHome.route
-    else return Screen.Login.route
 }
 
 // Auth state holder

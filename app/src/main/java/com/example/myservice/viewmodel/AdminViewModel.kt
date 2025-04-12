@@ -1,6 +1,7 @@
 package com.example.myservice.viewmodel
 
 import android.util.Log
+import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -21,6 +22,10 @@ class AdminViewModel (
 
     private val _loading = mutableStateOf(false)
     val loading: Boolean get() = _loading.value
+
+    fun selectInvoice(invoice: Invoice) {
+        _selectedInvoice.value = invoice
+    }
 
     //private val apiService = RetrofitClient.instance.create(InvoiceApi::class.java)
 
