@@ -96,8 +96,8 @@ fun MainScreen(
                         )
 
                         NavigationBarItem(
-                            icon = { Icon(Icons.Default.Assessment, "Reports") },
-                            label = { Text("Reports") },
+                            icon = { Icon(Icons.Default.Assessment, "Collection") },
+                            label = { Text("Collection") },
                             selected = currentRoute == Screen.Reports.route,
                             onClick = {
                                 childNavController.navigate(Screen.Reports.route) {

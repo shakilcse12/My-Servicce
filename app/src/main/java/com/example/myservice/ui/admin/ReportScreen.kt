@@ -24,7 +24,7 @@ fun ReportScreen(
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Report") }) }
+        topBar = { TopAppBar(title = { Text("Collection") }) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -32,7 +32,7 @@ fun ReportScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            Text("This is the Report screen.", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+            Text("This is the Collection screen.", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
             // Add your report details here.
 
         }
