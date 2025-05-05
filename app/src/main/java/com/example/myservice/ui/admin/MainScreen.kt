@@ -37,6 +37,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.myservice.ui.common.InvoiceCollectionScreen
 import com.example.myservice.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,9 +99,9 @@ fun MainScreen(
                         NavigationBarItem(
                             icon = { Icon(Icons.Default.Assessment, "Collection") },
                             label = { Text("Collection") },
-                            selected = currentRoute == Screen.Reports.route,
+                            selected = currentRoute == Screen.CollectionScreen.route,
                             onClick = {
-                                childNavController.navigate(Screen.Reports.route) {
+                                childNavController.navigate(Screen.CollectionScreen.route) {
                                     popUpTo(childNavController.graph.findStartDestination().id) {
                                         saveState = true
                                     }
@@ -130,10 +131,9 @@ fun MainScreen(
                     bottomBarHeight = bottomBarHeight
                 )
             }
-            composable(Screen.Reports.route) {
-                ReportScreen(
-                    onBack = { childNavController.popBackStack() },
-                    modifier = Modifier
+            composable(Screen.CollectionScreen.route) {
+                InvoiceCollectionScreen(
+                    onBack = { childNavController.popBackStack() }
                 )
             }
         }
