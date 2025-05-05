@@ -16,7 +16,9 @@ import retrofit2.http.*
 import retrofit2.Response
 import com.example.myservice.data.model.SR;
 import com.example.myservice.data.model.InvoiceBySrAndDateRangeReq;
+import com.example.myservice.data.model.InvoiceCollectionReq
 import com.example.myservice.data.model.InvoiceCollectionResponse
+import com.example.myservice.data.model.SRCollectionResponse
 import com.example.myservice.data.model.SrListResponse
 
 interface AuthService {
@@ -49,6 +51,8 @@ interface InvoiceService {
     @POST(Api.Endpoints.INVOICE_BY_SR)
     suspend fun getInvoicesBySrAndDateRange(@Body invoiceBySrAndDateRangeReq: InvoiceBySrAndDateRangeReq): Response<CollectionResponse>
 
+    @POST(Api.Endpoints.INVOICE_COLLECT)
+    suspend fun collectInvoiceBySR(@Body invoiceCollectionReq: InvoiceCollectionReq): Response<SRCollectionResponse>
 
     /*@GET("invoices/{id}")
     suspend fun getInvoice(@Path("id") invoiceId: String): Response<Invoice>

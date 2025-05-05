@@ -3,6 +3,7 @@ package com.example.myservice.data.repository
 import CreateInvoiceRequest
 import com.example.myservice.data.model.CollectionResponse
 import com.example.myservice.data.model.InvoiceBySrAndDateRangeReq
+import com.example.myservice.data.model.InvoiceCollectionReq
 import com.example.myservice.data.model.InvoiceCollectionResponse
 import com.example.myservice.data.model.InvoiceCreateResponse
 import com.example.myservice.data.model.InvoiceResponse
@@ -10,6 +11,7 @@ import com.example.myservice.data.model.InvoiceResponseSingle
 import com.example.myservice.data.model.PartyResponse
 import com.example.myservice.data.model.ProductResponse
 import com.example.myservice.data.model.SR
+import com.example.myservice.data.model.SRCollectionResponse
 import com.example.myservice.data.model.SrListResponse
 import com.example.myservice.network.InvoiceService
 import retrofit2.Response
@@ -43,5 +45,9 @@ class InvoiceRepository(private val invoiceService: InvoiceService) {
 
     suspend fun getInvoiceBySrAndDateRange(req: InvoiceBySrAndDateRangeReq) : Response<CollectionResponse> {
         return invoiceService.getInvoicesBySrAndDateRange(req)
+    }
+
+    suspend fun collectInvoiceBySR(req: InvoiceCollectionReq) : Response<SRCollectionResponse> {
+        return invoiceService.collectInvoiceBySR(req)
     }
 }

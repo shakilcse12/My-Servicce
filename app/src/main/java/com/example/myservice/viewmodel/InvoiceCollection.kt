@@ -1,6 +1,7 @@
 package com.example.myservice.viewmodel
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -9,10 +10,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myservice.data.model.Invoice
 import com.example.myservice.data.model.InvoiceBySrAndDateRangeReq
+import com.example.myservice.data.model.InvoiceCollectionReq
 import com.example.myservice.data.model.InvoiceCollectionResponse
 import com.example.myservice.data.model.SR
 import com.example.myservice.data.repository.InvoiceRepository
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class InvoiceCollection(
     private val repository: InvoiceRepository
@@ -128,8 +132,18 @@ class InvoiceCollection(
     fun collectInvoice(invoiceId: Int, amount: Double) {
         viewModelScope.launch {
             try {
-                val success = true;//repository.collectInvoice(invoiceId)
-                if (success) {
+                val response =  repository.collectInvoiceBySR(
+                    InvoiceCollectionReq(
+                        partyId = selectedInvoiceForCollection?.id ?: 4,
+                        collectionAmount = amount,
+                        transactionDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                        collectionDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    )
+                )
+                Log.d("SHAKIL", response.toString())
+                if (response.isSuccessful) {
+                    Log.d("SHAKIL", response.toString())
+                    //Toast.makeText(context, response.body()?.message, Toast.LENGTH_SHORT).show()
                     loadInvoices() // Refresh the list after collection
                 } else {
                     //_uiState.update { it.copy(error = "Failed to collect invoice") }
