@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myservice.data.model.Invoice
@@ -14,6 +15,9 @@ import com.example.myservice.data.model.InvoiceCollectionReq
 import com.example.myservice.data.model.InvoiceCollectionResponse
 import com.example.myservice.data.model.SR
 import com.example.myservice.data.repository.InvoiceRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -41,6 +45,9 @@ class InvoiceCollection(
 
     //var selectedSR by mutableStateOf<String?>(null)
     var selectedStartDate by mutableStateOf<String?>(null)
+
+    private val _toastMessage = MutableStateFlow<String?>(null)
+    val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
 
     init {
         loadSRs()
@@ -105,7 +112,7 @@ class InvoiceCollection(
                 try {
                     val response = repository.getInvoiceBySrAndDateRange(
                         InvoiceBySrAndDateRangeReq(
-                            srId = 15, //selectedSR!!.id ?: throw Exception("SR not selected"),
+                            srId = selectedSR!!.id ?: throw Exception("SR not selected"),
                             startDate = selectedStartDate.toString(),
                             endDate = selectedEndDate.toString(),
                         )
@@ -132,26 +139,39 @@ class InvoiceCollection(
     fun collectInvoice(invoiceId: Int, amount: Double) {
         viewModelScope.launch {
             try {
-                val response =  repository.collectInvoiceBySR(
+                val response = repository.collectInvoiceBySR(
                     InvoiceCollectionReq(
                         partyId = selectedInvoiceForCollection?.id ?: 4,
-                        collectionAmount = amount,
-                        transactionDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                        collectionAmount = amount.toInt(),
+                        transactionDate = selectedInvoiceForCollection?.invoiceDate ?: "2025-04-14",
                         collectionDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
                     )
                 )
                 Log.d("SHAKIL", response.toString())
                 if (response.isSuccessful) {
+                    response.body()?.let { collectionResult ->
+                        _toastMessage.value = collectionResult.message
+                    } ?: run {
+                        _toastMessage.value = "Invoice collected successfully"
+                    }
                     Log.d("SHAKIL", response.toString())
-                    //Toast.makeText(context, response.body()?.message, Toast.LENGTH_SHORT).show()
+
                     loadInvoices() // Refresh the list after collection
                 } else {
+                    _toastMessage.value = "Failed to collect invoice: ${response.message()}"
                     //_uiState.update { it.copy(error = "Failed to collect invoice") }
                 }
             } catch (e: Exception) {
+                _toastMessage.value = "Error: ${e.message}"
                 //_uiState.update { it.copy(error = e.message) }
             }
         }
+
     }
+
+    fun clearToastMessage() {
+        _toastMessage.value = null
+    }
+
 }
 

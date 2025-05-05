@@ -1,4 +1,5 @@
 package com.example.myservice.ui.common
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +28,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -83,6 +85,16 @@ fun InvoiceCollectionScreen(
             viewModel.selectedStartDate != null &&
             viewModel.selectedEndDate != null) {
             viewModel.loadInvoices()
+        }
+    }
+
+    val toastMessage by viewModel.toastMessage.collectAsState()
+
+    // Show toast when toastMessage is not null
+    LaunchedEffect(toastMessage) {
+        if (toastMessage != null) {
+            Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show()
+            viewModel.clearToastMessage()
         }
     }
 
@@ -209,7 +221,7 @@ fun InvoiceItem(invoice: InvoiceCollectionResponse, onCollect: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Amount: ₹${invoice.totalInvoiceAmount}",
+                    text = "Amount: ${invoice.totalInvoiceAmount}",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -257,7 +269,7 @@ private fun CollectionDialog(
                 )
 
                 OutlinedTextField(
-                    value = "₹${invoice.totalInvoiceAmount}",
+                    value = invoice.totalInvoiceAmount,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Total Amount") },

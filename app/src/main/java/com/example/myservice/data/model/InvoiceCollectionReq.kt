@@ -7,7 +7,7 @@ data class InvoiceCollectionReq(
     val partyId: Int,
 
     @SerializedName("collection_amount")
-    val collectionAmount: Double,
+    val collectionAmount: Int,
 
     @SerializedName("transaction_date")
     val transactionDate: String,
