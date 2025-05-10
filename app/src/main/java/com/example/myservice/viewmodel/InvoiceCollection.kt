@@ -136,7 +136,7 @@ class InvoiceCollection(
         selectedInvoiceForCollection = invoice
     }
 
-    fun collectInvoice(invoiceId: Int, amount: Double) {
+    fun collectInvoice(invoiceId: Int, amount: Double, collectionDateBySR: LocalDate) {
         viewModelScope.launch {
             try {
                 val response = repository.collectInvoiceBySR(
@@ -144,7 +144,7 @@ class InvoiceCollection(
                         partyId = selectedInvoiceForCollection?.id ?: 4,
                         collectionAmount = amount.toInt(),
                         transactionDate = selectedInvoiceForCollection?.invoiceDate ?: "2025-04-14",
-                        collectionDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+                        collectionDate = collectionDateBySR.toString()
                     )
                 )
                 Log.d("SHAKIL", response.toString())

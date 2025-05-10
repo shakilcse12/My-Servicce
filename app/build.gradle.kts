@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.material)
 
 
     // Testing

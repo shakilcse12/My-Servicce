@@ -1,5 +1,6 @@
 package com.example.myservice.ui.common
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,6 +8,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -19,12 +21,14 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,7 +57,9 @@ import com.example.myservice.viewmodel.InvoiceCollection
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
+import androidx.wear.compose.material.ContentAlpha
 import com.example.myservice.data.model.InvoiceCollectionResponse
+import com.example.myservice.ui.components.DatePickerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -187,8 +193,8 @@ fun InvoiceCollectionScreen(
         CollectionDialog(
             invoice = invoice,
             onDismiss = { viewModel.updateSelectedInvoiceForCollection(null) },
-            onConfirm = { amount ->
-                viewModel.collectInvoice(invoice.id, amount)
+            onConfirm = { amount, date ->
+                viewModel.collectInvoice(invoice.id, amount, date)
                 viewModel.updateSelectedInvoiceForCollection(null)
             }
         )
@@ -242,10 +248,13 @@ fun InvoiceItem(invoice: InvoiceCollectionResponse, onCollect: () -> Unit) {
 private fun CollectionDialog(
     invoice: InvoiceCollectionResponse,
     onDismiss: () -> Unit,
-    onConfirm: (Double) -> Unit
+    onConfirm: (amount: Double, date: LocalDate) -> Unit
 ) {
-    var collectedAmount by remember { mutableStateOf("") }
-
+        var collectedAmount by remember { mutableStateOf("") }
+        var showPicker by remember { mutableStateOf(false) }
+        // default to today
+        var selectedDate by remember { mutableStateOf(LocalDate.now())
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Collect Payment") },
@@ -276,6 +285,13 @@ private fun CollectionDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
+                    value = invoice.totalCollectionAmount,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Total Collection Amount") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
                     value = collectedAmount,
                     onValueChange = {
                         if (it.matches(Regex("^\\d*\\.?\\d*$"))) {
@@ -287,16 +303,32 @@ private fun CollectionDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
+// Date picker button
+                Button(
+                    onClick = { showPicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
+                }
 
-
+                // Show date picker dialog
+                DatePickerDialog(
+                    showDialog = showPicker,
+                    initialDate = selectedDate,
+                    onDateSelected = {
+                        selectedDate = it
+                        showPicker = false
+                    },
+                    onDismiss = { showPicker = false }
+                )
             }
         },
 
         confirmButton = {
             TextButton(
                 onClick = {
-                    collectedAmount.toDoubleOrNull()?.let {
-                        if (it > 0) onConfirm(it)
+                    collectedAmount.toDoubleOrNull()?.let { amt ->
+                        if (amt > 0) onConfirm(amt, selectedDate)
                     }
                 }
             ) {
