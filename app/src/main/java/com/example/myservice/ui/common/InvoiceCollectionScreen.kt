@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -122,6 +123,9 @@ fun InvoiceCollectionScreen(
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
+
+            // Replace PartySearchField with
+            PartySearchWithDropdown(viewModel)
             // Filter Section
             FilterSection(
                 viewModel = viewModel,
@@ -157,7 +161,7 @@ fun InvoiceCollectionScreen(
                         CircularProgressIndicator()
                     }
                 }
-                viewModel.invoices.isNotEmpty() -> {
+                viewModel.filteredInvoices.isNotEmpty() -> {
 
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
@@ -165,7 +169,7 @@ fun InvoiceCollectionScreen(
                             state = listState,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(viewModel.invoices) { invoice ->
+                            items(viewModel.filteredInvoices) { invoice ->
                                 InvoiceItem(
                                     invoice = invoice,
                                     onCollect = { viewModel.updateSelectedInvoiceForCollection(invoice) }
@@ -198,6 +202,81 @@ fun InvoiceCollectionScreen(
                 viewModel.updateSelectedInvoiceForCollection(null)
             }
         )
+    }
+}
+
+// New PartySearchWithDropdown composable
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PartySearchWithDropdown(viewModel: InvoiceCollection) {
+    val filteredParties = remember(viewModel.partySearchQuery, viewModel.availableParties) {
+        if (viewModel.partySearchQuery.isEmpty()) {
+            viewModel.availableParties
+        } else {
+            viewModel.availableParties.filter { party ->
+                party.contains(viewModel.partySearchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = viewModel.isPartyDropdownExpanded,
+        onExpandedChange = { viewModel.isPartyDropdownExpanded = it }
+    ) {
+        TextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+                .padding(horizontal = 16.dp),
+            value = viewModel.partySearchQuery,
+            onValueChange = {
+                viewModel.partySearchQuery = it
+                viewModel.isPartyDropdownExpanded = true
+            },
+            label = { Text("Search Party") },
+            trailingIcon = {
+                Row {
+                    // Clear button when there's text
+                    if (viewModel.partySearchQuery.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                viewModel.clearSearch()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search"
+                            )
+                        }
+                    }
+                    ExposedDropdownMenuDefaults.TrailingIcon(
+                        expanded = viewModel.isPartyDropdownExpanded
+                    )
+                }
+            }
+        )
+
+        ExposedDropdownMenu(
+            expanded = viewModel.isPartyDropdownExpanded,
+            onDismissRequest = { viewModel.isPartyDropdownExpanded = false }
+        ) {
+            if (filteredParties.isEmpty()) {
+                DropdownMenuItem(
+                    text = { Text("No matching parties") },
+                    onClick = { viewModel.isPartyDropdownExpanded = false }
+                )
+            } else {
+                filteredParties.forEach { party ->
+                    DropdownMenuItem(
+                        text = { Text(party) },
+                        onClick = {
+                            viewModel.partySearchQuery = party
+                            viewModel.isPartyDropdownExpanded = false
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 

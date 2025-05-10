@@ -32,6 +32,7 @@ class InvoiceCollection(
     private val _invoices = mutableStateListOf<InvoiceCollectionResponse>()
     val invoices: List<InvoiceCollectionResponse> get() = _invoices
 
+    // Filter states
     var selectedSR by mutableStateOf<SR?>(null)
 
     var selectedInvoiceForCollection by mutableStateOf<InvoiceCollectionResponse?>(null)
@@ -48,6 +49,26 @@ class InvoiceCollection(
 
     private val _toastMessage = MutableStateFlow<String?>(null)
     val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
+
+    // Add these new state variables
+    var partySearchQuery by mutableStateOf("")
+    var isPartyDropdownExpanded by mutableStateOf(false)
+    private val _availableParties = mutableStateListOf<String>()
+    val availableParties: List<String> get() = _availableParties
+
+    val filteredInvoices: List<InvoiceCollectionResponse>
+        get() = _invoices.filter {
+            partySearchQuery.isEmpty() ||
+                    it.businessName.contains(partySearchQuery, ignoreCase = true)
+        }
+
+    // Update when invoices are loaded
+    private fun updateAvailableParties() {
+        _availableParties.clear()
+        _availableParties.addAll(
+            _invoices.map { it.businessName }.distinct().sorted()
+        )
+    }
 
     init {
         loadSRs()
@@ -122,14 +143,25 @@ class InvoiceCollection(
                         response.body()?.let {
                             _invoices.addAll(it.data ?: emptyList())
                         }
+                        updateAvailableParties()
+                        clearSearch()
                     }
                 } catch (e: Exception) {
+                    _toastMessage.value = "Error loading invoices: ${e.message}"
                     Log.e("InvoiceCollection", "Error loading invoices", e)
                 } finally {
                     _loading.value = false
                 }
             }
+        } else {
+            _toastMessage.value = "Please select SR and date range"
+            return
         }
+    }
+    // Clear search functionality
+    fun clearSearch() {
+        partySearchQuery = ""
+        isPartyDropdownExpanded = false
     }
 
     fun updateSelectedInvoiceForCollection(invoice: InvoiceCollectionResponse?) {
@@ -157,6 +189,7 @@ class InvoiceCollection(
                     Log.d("SHAKIL", response.toString())
 
                     loadInvoices() // Refresh the list after collection
+                    clearSearch()
                 } else {
                     _toastMessage.value = "Failed to collect invoice: ${response.message()}"
                     //_uiState.update { it.copy(error = "Failed to collect invoice") }
