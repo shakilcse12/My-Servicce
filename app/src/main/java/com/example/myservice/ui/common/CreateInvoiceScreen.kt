@@ -437,7 +437,8 @@ private fun DatePickerField(
                             val localDate = java.time.Instant.ofEpochMilli(selectedMillis)
                                 .atZone(java.time.ZoneOffset.UTC) // Use UTC Zone
                                 .toLocalDate()
-                            onDateSelected(localDate.format(dateFormatter))
+                            onDateSelected(LocalDate.parse(localDate.format(dateFormatter))
+                                .format(DateTimeFormatter.ofPattern("dd MMM, yyyy")))
                         }
                         showDatePicker = false
                     }

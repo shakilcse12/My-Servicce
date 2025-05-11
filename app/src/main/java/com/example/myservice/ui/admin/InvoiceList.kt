@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.myservice.data.model.Invoice
 import java.time.LocalDate
@@ -23,8 +24,6 @@ fun InvoiceList(
     listState: LazyListState,
     invoices: State<List<Invoice>>,
     isOwner: Boolean,
-    onPrint: (Invoice) -> Unit = {},
-    onEdit: (Invoice) -> Unit = {},
     onDetails: (Invoice) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -32,20 +31,16 @@ fun InvoiceList(
         state = listState,
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(invoices.value) { invoice ->
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)) {
-
-                    // Top row: Business name on left, Date on right
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Header row: Business name and date
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -62,36 +57,44 @@ fun InvoiceList(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
 
-                    // Amounts
-                    Text("Total: ${invoice.totalPayableAmount}")
-                    Text("Received: ${invoice.collectedAmount}")
+                    // Total row: label and amount side by side
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Total:",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = invoice.totalPayableAmount,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
 
-                    if (isOwner) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        // Button row: Print & Edit on left, Details on right
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                /*Button(onClick = { onPrint(invoice) }) {
-                                    Text("Collection")
-                                }
-                                Button(onClick = { onEdit(invoice) }) {
-                                    Text("Edit")
-                                }*/
-                            }
-                            // Push Details to right
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .wrapContentWidth(Alignment.End)
-                            ) {
-                                Button(onClick = { onDetails(invoice) }) {
-                                    Text("Details")
-                                }
+                    Spacer(Modifier.height(4.dp))
+
+                    // Received row: label and amount side by side, with Details button flush right
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Received:",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = invoice.collectedAmount,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(Modifier.weight(1f))
+                        if (isOwner) {
+                            Button(onClick = { onDetails(invoice) }) {
+                                Text("Details")
                             }
                         }
                     }

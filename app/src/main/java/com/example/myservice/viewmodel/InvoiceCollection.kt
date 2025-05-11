@@ -15,6 +15,7 @@ import com.example.myservice.data.model.InvoiceCollectionReq
 import com.example.myservice.data.model.InvoiceCollectionResponse
 import com.example.myservice.data.model.SR
 import com.example.myservice.data.repository.InvoiceRepository
+import convertDateFormat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -176,7 +177,7 @@ class InvoiceCollection(
                         partyId = selectedInvoiceForCollection?.id ?: 4,
                         collectionAmount = amount.toInt(),
                         transactionDate = selectedInvoiceForCollection?.invoiceDate ?: "2025-04-14",
-                        collectionDate = collectionDateBySR.toString()
+                        collectionDate = collectionDateBySR
                     )
                 )
                 Log.d("SHAKIL", response.toString())

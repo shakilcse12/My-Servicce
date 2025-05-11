@@ -388,7 +388,8 @@ private fun CollectionDialog(
                 )
 
                 DatePickerField(
-                    selectedDate = selectedDate,
+                    selectedDate = LocalDate.parse(selectedDate)
+                        .format(DateTimeFormatter.ofPattern("dd MMM, yyyy")),
                     onDateSelected = { selectedDate = it },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -614,7 +615,7 @@ private fun DateFilterButton(
         onClick = onClick
     ) {
         Text(text = date?.let {
-            LocalDate.parse(it).format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+            LocalDate.parse(it).format(DateTimeFormatter.ofPattern("dd MMM, yyyy"))
         } ?: label)
     }
 }

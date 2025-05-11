@@ -182,12 +182,12 @@ fun AdminHomeScreen(
                         listState = listState,
                         invoices = viewModel.filteredInvoices,
                         isOwner = true,
-                        onPrint = { invoice ->
+                        /*onPrint = { invoice ->
                             // Print logic
                         },
                         onEdit = { invoice ->
                             //navController.navigate(Screen.EditInvoice.createRoute(invoice.id.toString()))
-                        },
+                        },*/
                         onDetails = { invoice ->
                             onInvoiceClick(invoice.id.toString())
                         },
