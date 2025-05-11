@@ -36,6 +36,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.myservice.data.model.Invoice
 import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.viewmodel.SingleInvoiceViewModel
+import convertDateFormat
+import formatDateTime
+import formatUtcTimestamp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,6 +120,7 @@ private fun InvoiceContent(invoice: Invoice, padding: PaddingValues) {
                     Text("Business: ${invoice.party?.businessName}")
                     Text("Owner: ${invoice.party?.ownerName}")
                     Text("Address: ${invoice.party?.officeAddress}")
+                    Text("Phone No: ${invoice.party?.phoneNo}")
                 }
             }
 
@@ -147,7 +151,7 @@ private fun InvoiceContent(invoice: Invoice, padding: PaddingValues) {
                     Spacer(Modifier.height(8.dp))
                     Text("Collected: ৳${invoice.collectedAmount}")
                     Text("Remaining: ৳${invoice.remainingAmount}")
-                    Text("Created At: ${invoice.createdAt}")
+                    Text("Created At: ${formatDateTime(invoice.createdAt)}")
                     Text("Created By (User ID): ${invoice.createdById}")
                 }
             }
@@ -159,8 +163,8 @@ private fun InvoiceContent(invoice: Invoice, padding: PaddingValues) {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Invoice Date: ${invoice.date}")
-                    Text("Last Updated: ${invoice.updatedAt}")
+                    Text("Invoice Date: ${(invoice.date)}")
+                    Text("Last Updated: ${formatDateTime(invoice.updatedAt.toString())}")
                 }
             }
         }

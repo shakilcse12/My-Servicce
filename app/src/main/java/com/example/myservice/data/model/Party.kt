@@ -15,6 +15,9 @@ data class Party(
     @SerializedName("ownerName")
     val ownerName: String,
 
+    @SerializedName("mobileNo")
+    val phoneNo: String,
+
     @SerializedName("isActive")
     val isActive: Int,
 
