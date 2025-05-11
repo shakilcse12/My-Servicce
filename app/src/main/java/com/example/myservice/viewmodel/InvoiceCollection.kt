@@ -168,7 +168,7 @@ class InvoiceCollection(
         selectedInvoiceForCollection = invoice
     }
 
-    fun collectInvoice(invoiceId: Int, amount: Double, collectionDateBySR: LocalDate) {
+    fun collectInvoice(invoiceId: Int, amount: Double, collectionDateBySR: String) {
         viewModelScope.launch {
             try {
                 val response = repository.collectInvoiceBySR(
