@@ -136,7 +136,7 @@ data class CreateInvoiceState(
     val selectedProduct: DropdownItem? = null,
     val unitPrice: String = "",
     val totalCount: String = "",
-    val collectedMoney: String = "",
+    val collectedMoney: String = "0",
     val date: String = LocalDate.now().format(DateTimeFormatter.ISO_DATE),
     val loadingParties: Boolean = false,
     val loadingProducts: Boolean = false,

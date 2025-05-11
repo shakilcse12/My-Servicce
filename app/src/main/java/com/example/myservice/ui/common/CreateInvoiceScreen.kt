@@ -98,7 +98,7 @@ fun CreateInvoiceScreen(
             )
 
             NumberInputField(
-                label = "Collected Money",
+                label = "Advance amount",
                 value = state.collectedMoney,
                 onValueChange = { viewModel.updateCollectedMoney(it) },
                 modifier = Modifier.fillMaxWidth()

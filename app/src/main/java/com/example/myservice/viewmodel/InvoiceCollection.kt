@@ -189,7 +189,6 @@ class InvoiceCollection(
                     Log.d("SHAKIL", response.toString())
 
                     loadInvoices() // Refresh the list after collection
-                    clearSearch()
                 } else {
                     _toastMessage.value = "Failed to collect invoice: ${response.message()}"
                     //_uiState.update { it.copy(error = "Failed to collect invoice") }
