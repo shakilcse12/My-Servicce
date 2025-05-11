@@ -438,17 +438,23 @@ private fun FilterSection(
         // Date Range Filter
         Row(
             modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Text("From", style = MaterialTheme.typography.bodyMedium)
+
             DateFilterButton(
                 label = "Start Date",
                 date = viewModel.selectedStartDate,
-                onClick = onStartDateSelected
+                onClick = onStartDateSelected,
             )
+
+            Text("To", style = MaterialTheme.typography.bodyMedium)
+
             DateFilterButton(
                 label = "End Date",
                 date = viewModel.selectedEndDate,
-                onClick = onEndDateSelected
+                onClick = onEndDateSelected,
             )
         }
     }

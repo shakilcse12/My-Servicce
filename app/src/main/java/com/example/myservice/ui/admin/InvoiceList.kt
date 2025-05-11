@@ -1,22 +1,22 @@
 package com.example.myservice.ui.admin
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.myservice.data.model.Invoice
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun InvoiceList(
@@ -28,36 +28,70 @@ fun InvoiceList(
     onDetails: (Invoice) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    LazyColumn (
+    LazyColumn(
         state = listState,
         modifier = modifier
-            .fillMaxSize() // Take full available space
+            .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
         items(invoices.value) { invoice ->
-            Card (
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                androidx.compose.foundation.layout.Column(modifier = Modifier
+                Column(modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)) {
-                    Text(invoice.party.businessName, style = MaterialTheme.typography.titleMedium)
+
+                    // Top row: Business name on left, Date on right
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = invoice.party.businessName,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = LocalDate.parse(invoice.date)
+                                .format(DateTimeFormatter.ofPattern("dd MMM, yyyy")),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Amounts
                     Text("Total: ${invoice.totalPayableAmount}")
                     Text("Received: ${invoice.collectedAmount}")
+
                     if (isOwner) {
-                        Row {
-                            Button(onClick = { onPrint(invoice) }) {
-                                Text("Collection")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Button row: Print & Edit on left, Details on right
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                /*Button(onClick = { onPrint(invoice) }) {
+                                    Text("Collection")
+                                }
+                                Button(onClick = { onEdit(invoice) }) {
+                                    Text("Edit")
+                                }*/
                             }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Button(onClick = { onEdit(invoice) }) {
-                                Text("Edit")
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Button(onClick = { onDetails(invoice) }) {
-                                Text("Details")
+                            // Push Details to right
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentWidth(Alignment.End)
+                            ) {
+                                Button(onClick = { onDetails(invoice) }) {
+                                    Text("Details")
+                                }
                             }
                         }
                     }
