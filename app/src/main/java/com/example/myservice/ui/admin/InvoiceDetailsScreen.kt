@@ -24,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,7 @@ import com.example.myservice.data.model.Invoice
 import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.viewmodel.SingleInvoiceViewModel
 import convertDateFormat
+import formatDate
 import formatDateTime
 import formatUtcTimestamp
 
@@ -64,6 +66,7 @@ fun InvoiceDetailsScreen(navController: NavController,
     val invoice by viewModel.invoice
     val loading by viewModel.loading
     val error by viewModel.error
+    val srName by viewModel.srName.observeAsState()
 
     Scaffold(
         topBar = {
@@ -80,7 +83,7 @@ fun InvoiceDetailsScreen(navController: NavController,
         when {
             loading -> FullScreenLoader()
             error != null -> ErrorMessage(error!!) { viewModel.refresh() }
-            invoice != null -> InvoiceContent(invoice!!, padding)
+            invoice != null -> InvoiceContent(invoice!!, srName, padding)
             else -> ErrorMessage("Invoice not found") { viewModel.refresh() }
         }
     }
@@ -88,7 +91,7 @@ fun InvoiceDetailsScreen(navController: NavController,
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun InvoiceContent(invoice: Invoice, padding: PaddingValues) {
+private fun InvoiceContent(invoice: Invoice, srName: String?, padding: PaddingValues) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -152,7 +155,9 @@ private fun InvoiceContent(invoice: Invoice, padding: PaddingValues) {
                     Text("Collected: ৳${invoice.collectedAmount}")
                     Text("Remaining: ৳${invoice.remainingAmount}")
                     Text("Created At: ${formatDateTime(invoice.createdAt)}")
-                    Text("Created By (User ID): ${invoice.createdById}")
+                    Text(
+                        text = "Created By (SR): ${srName ?: "Loading..."}"
+                    )
                 }
             }
 
@@ -163,8 +168,8 @@ private fun InvoiceContent(invoice: Invoice, padding: PaddingValues) {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Invoice Date: ${(invoice.date)}")
-                    Text("Last Updated: ${formatDateTime(invoice.updatedAt.toString())}")
+                    Text("Invoice Date: ${formatDate(invoice.date)}")
+                    Text("Last Updated: ${formatDateTime(invoice.updatedAt)}")
                 }
             }
         }

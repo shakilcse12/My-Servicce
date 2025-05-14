@@ -117,6 +117,48 @@ class AdminViewModel (
     }*/
     //refresh invoice list
     fun checkForNewInvoices() {
+        Log.d("SHAKIL", "checkForNewInvoices() called")
+        viewModelScope.launch {
+            try {
+                val response = invoiceRepository.getAllInvoices()
+                if (!response.isSuccessful) {
+                    Log.e("AdminViewModel", "Server error: ${response.code()}")
+                    return@launch
+                }
+
+                val invoiceResponse = response.body()
+                if (invoiceResponse == null || !invoiceResponse.success) {
+                    Log.e("AdminViewModel", "API failure or empty body")
+                    return@launch
+                }
+
+                val fetched = invoiceResponse.data.orEmpty()
+
+                // 1) Build a map of fetched invoices by ID for quick lookup
+                val fetchedById = fetched.associateBy { it.id }
+
+                // 2) For each existing invoice, replace it if there's a newer version
+                val replaced = _invoices.map { existing ->
+                    fetchedById[existing.id] ?: existing
+                }
+
+                // 3) Collect truly new invoices (IDs not already in existing list)
+                val existingIds = _invoices.map { it.id }.toSet()
+                val newOnes = fetched.filter { it.id !in existingIds }
+
+                // 4) Combine: new ones at front, then replaced/unchanged
+                _invoices.clear()
+                _invoices.addAll(0, newOnes)
+                _invoices.addAll(replaced)
+
+                Log.d("SHAKIL", "Invoices updated: total now = ${_invoices.size}")
+            } catch (e: Exception) {
+                Log.e("AdminViewModel", "Error checking new invoices", e)
+            }
+        }
+    }
+
+    fun checkForNewInvoices2() {
         Log.d("SHAKIL", "yep this luanched is getting called");
         viewModelScope.launch {
             try {

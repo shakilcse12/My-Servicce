@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
+import java.time.format.DateTimeParseException
 // Other update functions (selectParty, selectProduct, etc.)
 fun convertDateFormat(input: String): String? {
     return try {
@@ -24,9 +24,21 @@ fun formatUtcTimestamp(isoString: String): String {
     return formatter.format(instant)
 }
 
+fun formatDate(inputDate: String): String? {
+    return try {
+        // Parse input date (YYYY-MM-DD)
+        val date = LocalDate.parse(inputDate, DateTimeFormatter.ISO_LOCAL_DATE)
+        // Format to dd MMM, yyyy
+        date.format(DateTimeFormatter.ofPattern("dd MMM, yyyy"))
+    } catch (e: DateTimeParseException) {
+        // Handle invalid date format
+        "Invalid date format"
+    }
+}
+
 fun formatDateTime(input: String): String {
     val inputFormatter = DateTimeFormatter.ISO_INSTANT
-    val outputFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault())
+    val outputFormatter = DateTimeFormatter.ofPattern("dd MMM, yyyy 'at' hh:mm a", Locale.getDefault())
 
     return try {
         val instant = Instant.parse(input)
