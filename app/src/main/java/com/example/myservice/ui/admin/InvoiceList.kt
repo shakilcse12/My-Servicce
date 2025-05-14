@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.example.myservice.data.model.Invoice
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
 @Composable
 fun InvoiceList(
     listState: LazyListState,
@@ -37,7 +38,7 @@ fun InvoiceList(
         state = listState,
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(invoices.value) { invoice ->
@@ -53,7 +54,7 @@ private fun InvoiceCard(
     onDetails: (Invoice) -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         modifier = Modifier
             .fillMaxWidth()

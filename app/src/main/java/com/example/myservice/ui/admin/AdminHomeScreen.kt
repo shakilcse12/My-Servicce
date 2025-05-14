@@ -140,13 +140,15 @@ fun AdminHomeScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .padding(horizontal = 8.dp) // Add standard horizontal padding here
         ) {
             val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = viewModel.loading)
             // Filter Section
             FilterSection(
                 viewModel = viewModel,
                 onStartDateSelected = { showStartDatePicker = true },
-                onEndDateSelected = { showEndDatePicker = true }
+                onEndDateSelected = { showEndDatePicker = true },
+                modifier = Modifier.fillMaxWidth() // Remove internal padding from FilterSection
             )
             // Date Pickers
             DatePickerDialog(
@@ -171,11 +173,12 @@ fun AdminHomeScreen(
 
             SwipeRefresh(
                 state = swipeRefreshState,
-                onRefresh = { viewModel.checkForNewInvoices() }
+                onRefresh = { viewModel.checkForNewInvoices() },
+                modifier = Modifier.padding(top = 8.dp) // Add spacing between filters and list
             ) {
                 if (viewModel.loading && invoices.isEmpty()) {
-                    Box(Modifier.fillMaxSize()) {
-                        CircularProgressIndicator(Modifier.align(Alignment.Center)) // ✅ Now inside a Box
+                    Box(Modifier.fillMaxSize().padding(top = 8.dp)) {
+                        CircularProgressIndicator(Modifier.align(Alignment.Center).padding(top = 8.dp)) // ✅ Now inside a Box
                     }
                 } else {
                     InvoiceList(
@@ -204,13 +207,13 @@ fun AdminHomeScreen(
 private fun FilterSection(
     viewModel: AdminViewModel,
     onStartDateSelected: () -> Unit,
-    onEndDateSelected: () -> Unit
+    onEndDateSelected: () -> Unit,
+    modifier: Modifier = Modifier // Add modifier parameter
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp), // Reduced vertical padding
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = modifier
+            .padding(vertical = 8.dp), // Remove horizontal padding here
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Party Filter
         PartyDropdown(
@@ -295,7 +298,8 @@ private fun DateFilterButton(
     onClick: () -> Unit
 ) {
     Button(
-        onClick = onClick
+        onClick = onClick,
+        modifier = Modifier.padding(vertical = 4.dp)
     ) {
         Text(text = date?.let {
             LocalDate.parse(it).format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))

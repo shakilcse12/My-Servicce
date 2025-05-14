@@ -41,28 +41,42 @@ import convertDateFormat
 import formatDate
 import formatDateTime
 import formatUtcTimestamp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+import convertDateFormat
+import formatDate
+import formatDateTime
+import formatUtcTimestamp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InvoiceDetailsScreen(navController: NavController,
-                         invoiceId: String) {
-
-    // Initialize ViewModel with proper factory
+fun InvoiceDetailsScreen(
+    navController: NavController,
+    invoiceId: String
+) {
+    // — ViewModel setup —
     val viewModel: SingleInvoiceViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val savedStateHandle = SavedStateHandle().apply {
-                    set("invoiceId", invoiceId)
-                }
-                return SingleInvoiceViewModel(
-                    savedStateHandle,
-                    InvoiceRepository(RetrofitInstance.invoiceService)
-                ) as T
+                val handle = SavedStateHandle().apply { set("invoiceId", invoiceId) }
+                return SingleInvoiceViewModel(handle, InvoiceRepository(RetrofitInstance.invoiceService)) as T
             }
         }
     )
 
-    // Observe ViewModel state
     val invoice by viewModel.invoice
     val loading by viewModel.loading
     val error by viewModel.error
@@ -74,105 +88,118 @@ fun InvoiceDetailsScreen(navController: NavController,
                 title = { Text("Invoice Details") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, null)
                     }
                 }
             )
         }
-    ) { padding ->
-        when {
-            loading -> FullScreenLoader()
-            error != null -> ErrorMessage(error!!) { viewModel.refresh() }
-            invoice != null -> InvoiceContent(invoice!!, srName, padding)
-            else -> ErrorMessage("Invoice not found") { viewModel.refresh() }
+    ) { insets ->
+        Box(modifier = Modifier.padding(insets)) {
+            when {
+                loading -> FullScreenLoader()
+                error != null -> ErrorMessage(error!!) { viewModel.refresh() }
+                invoice != null -> InvoiceDetailContent(invoice!!, srName)
+                else -> ErrorMessage("Invoice not found") { viewModel.refresh() }
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun InvoiceContent(invoice: Invoice, srName: String?, padding: PaddingValues) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Invoice Details") },
-            )
+private fun InvoiceDetailContent(invoice: Invoice, srName: String?) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        SectionCard(title = "Invoice Info") {
+            InfoRow("Invoice ID", invoice.invoiceId.toString())
+            formatDate(invoice.date)?.let { InfoRow("Invoice Date", it) }
+            InfoRow("Created At", formatDateTime(invoice.createdAt))
+            InfoRow("Created By (SR)", srName ?: "Loading...")
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize()
+
+        SectionCard(title = "Customer") {
+            InfoRow("Business", invoice.party?.businessName ?: "-")
+            InfoRow("Owner", invoice.party?.ownerName ?: "-")
+            InfoRow("Address", invoice.party?.officeAddress ?: "-")
+            InfoRow("Phone", invoice.party?.phoneNo ?: "-")
+        }
+
+        SectionCard(title = "Product") {
+            InfoRow("Name", invoice.product?.name ?: "-")
+            InfoRow("Unit Price", "৳${invoice.unitPrice}")
+            InfoRow("Quantity", invoice.quantity.toString())
+            InfoRow("Total Payable", "৳${invoice.totalPayableAmount}")
+        }
+
+        SectionCard(title = "Payment") {
+            InfoRow("Collected", "৳${invoice.collectedAmount}")
+            InfoRow("Remaining", "৳${invoice.remainingAmount}")
+        }
+
+        SectionCard(
+            title = "Timestamps",
+            background = MaterialTheme.colorScheme.secondaryContainer
         ) {
-
-            Text(
-                text = "Invoice ID: ${invoice.invoiceId}",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Customer Info", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(8.dp))
-                    Text("Business: ${invoice.party?.businessName}")
-                    Text("Owner: ${invoice.party?.ownerName}")
-                    Text("Address: ${invoice.party?.officeAddress}")
-                    Text("Phone No: ${invoice.party?.phoneNo}")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Product Info", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(8.dp))
-                    Text("Product Name: ${invoice.product?.name}")
-                    Text("Unit Price: ৳${invoice.unitPrice}")
-                    Text("Quantity: ${invoice.quantity}")
-                    Text("Total Payable: ৳${invoice.totalPayableAmount}")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Payment Info", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(8.dp))
-                    Text("Collected: ৳${invoice.collectedAmount}")
-                    Text("Remaining: ৳${invoice.remainingAmount}")
-                    Text("Created At: ${formatDateTime(invoice.createdAt)}")
-                    Text(
-                        text = "Created By (SR): ${srName ?: "Loading..."}"
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Invoice Date: ${formatDate(invoice.date)}")
-                    Text("Last Updated: ${formatDateTime(invoice.updatedAt)}")
-                }
-            }
+            InfoRow("Last Updated", formatDateTime(invoice.updatedAt))
+            InfoRow("UTC Logged", formatUtcTimestamp(invoice.updatedAt))
         }
+    }
+}
+
+@Composable
+private fun SectionCard(
+    title: String,
+    background: Color = MaterialTheme.colorScheme.surfaceVariant,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = background),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp
+                ),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Divider(color = MaterialTheme.colorScheme.onSurfaceVariant, thickness = 1.dp)
+            Spacer(modifier = Modifier.height(8.dp))
+            content()
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.InfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        )
     }
 }
 
@@ -193,9 +220,7 @@ private fun ErrorMessage(error: String, onRetry: () -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(text = error, color = MaterialTheme.colorScheme.error)
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(onClick = onRetry) { Text("Retry") }
     }
 }
