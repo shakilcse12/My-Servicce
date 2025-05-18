@@ -110,16 +110,7 @@ fun InvoiceCollectionScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Collection Screen") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
+
     ) { padding ->
         Column(
             modifier = Modifier

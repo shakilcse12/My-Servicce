@@ -1,6 +1,8 @@
 package com.example.myservice.ui.navigation
 
+import ProfileScreen
 import RetrofitInstance
+import SettingsScreen
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +40,8 @@ sealed class Screen(val route: String) {
     data object CollectionScreen : Screen("collection_screen")
     data object MainScreen : Screen("main_screen")
     data object AdminHome : Screen("admin_home")
+    data object Profile : Screen("common_profile")
+    data object Settings : Screen("common_settings")
     data object Reports : Screen("report_screen")
     data object EditInvoice : Screen("edit_invoice/{invoiceId}") {
         fun createRoute(invoiceId: String) = "edit_invoice/$invoiceId"
@@ -95,6 +99,13 @@ fun MyServiceAppNavigation() {
         ) { backStackEntry ->
             val invoiceId = backStackEntry.arguments?.getString("invoiceId")
             //EditInvoiceScreen(navController, invoiceId)
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(navController)
+        }
+        composable(Screen.Settings.route) {
+            SettingsScreen(navController)
         }
         /*composable(
             route = Screen.InvoiceDetails.route,

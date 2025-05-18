@@ -115,21 +115,6 @@ fun AdminHomeScreen(
     var showEndDatePicker by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("All Invoices") },
-                actions = {
-                    Button(
-                        onClick = onLogout,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Text("Logout", color = MaterialTheme.colorScheme.onErrorContainer)
-                    }
-                }
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreateInvoice) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "Create Invoice")
