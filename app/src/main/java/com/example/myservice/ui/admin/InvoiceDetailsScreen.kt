@@ -1,9 +1,7 @@
 package com.example.myservice.ui.admin
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,33 +31,30 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.myservice.data.model.Invoice
 import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.viewmodel.SingleInvoiceViewModel
-import convertDateFormat
 import formatDate
 import formatDateTime
 import formatUtcTimestamp
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
-
-import androidx.lifecycle.viewmodel.compose.viewModel
-import convertDateFormat
-import formatDate
-import formatDateTime
-import formatUtcTimestamp
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +67,10 @@ fun InvoiceDetailsScreen(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 val handle = SavedStateHandle().apply { set("invoiceId", invoiceId) }
-                return SingleInvoiceViewModel(handle, InvoiceRepository(RetrofitInstance.invoiceService)) as T
+                return SingleInvoiceViewModel(
+                    handle,
+                    InvoiceRepository(RetrofitInstance.invoiceService)
+                ) as T
             }
         }
     )
@@ -81,6 +79,8 @@ fun InvoiceDetailsScreen(
     val loading by viewModel.loading
     val error by viewModel.error
     val srName by viewModel.srName.observeAsState()
+    var showEditSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         topBar = {
@@ -88,7 +88,15 @@ fun InvoiceDetailsScreen(
                 title = { Text("Invoice Details") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, null)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { showEditSheet = true },
+                        enabled = invoice != null
+                    ) {
+                        Icon(Icons.Default.Edit, "Edit Invoice")
                     }
                 }
             )
@@ -100,6 +108,28 @@ fun InvoiceDetailsScreen(
                 error != null -> ErrorMessage(error!!) { viewModel.refresh() }
                 invoice != null -> InvoiceDetailContent(invoice!!, srName)
                 else -> ErrorMessage("Invoice not found") { viewModel.refresh() }
+            }
+        }
+        // Now *after* the Scaffold, conditionally emit the bottom sheet
+        if (showEditSheet) {
+            LaunchedEffect(Unit) {
+                sheetState.show()
+            }
+            ModalBottomSheet(
+                onDismissRequest = { showEditSheet = false },
+                sheetState = sheetState,
+                dragHandle = null, // or provide your own handle
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                EditInvoiceSheet(
+                    invoice = invoice,
+                    onDismiss = { showEditSheet = false },
+                    onSave = { updated ->
+                        // first close sheet, then update
+                        showEditSheet = false
+                        viewModel.updateInvoice(updated)
+                    }
+                )
             }
         }
     }
@@ -224,3 +254,105 @@ private fun ErrorMessage(error: String, onRetry: () -> Unit) {
         Button(onClick = onRetry) { Text("Retry") }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditInvoiceSheet(
+    invoice: Invoice?,
+    onDismiss: () -> Unit,
+    onSave: (Invoice) -> Unit
+) {
+    // Local editable state
+    var businessName by remember { mutableStateOf(invoice?.party?.businessName.orEmpty()) }
+    var unitPrice by remember { mutableStateOf(invoice?.unitPrice.toString()) }
+    var quantity by remember { mutableStateOf(invoice?.quantity.toString()) }
+    var collectedAmount by remember { mutableStateOf(invoice?.collectedAmount.toString()) }
+    // etc. for other fields…
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Header with dismiss icon
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, contentDescription = "Cancel Edit")
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "Edit Invoice",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Divider()
+
+        // Scrollable form
+        Column(
+            modifier = Modifier
+                .weight(1f) // Pin save bar below
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(
+                value = businessName,
+                onValueChange = { businessName = it },
+                label = { Text("Business Name") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = unitPrice,
+                onValueChange = { if (it.matches(Regex("^\\d*\\.?\\d*\$"))) unitPrice = it },
+                label = { Text("Unit Price") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = quantity,
+                onValueChange = { if (it.matches(Regex("^\\d*\$"))) quantity = it },
+                label = { Text("Quantity") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = collectedAmount,
+                onValueChange = { if (it.matches(Regex("^\\d*\\.?\\d*\$"))) collectedAmount = it },
+                label = { Text("Collected Amount") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // … other fields …
+        }
+
+        // Pinned Save button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Button(onClick = {
+                onSave(
+                    invoice?.copy(
+                        party = invoice.party.copy(businessName = businessName),
+                        unitPrice = (unitPrice.toDoubleOrNull() ?: invoice.unitPrice).toString(),
+                        quantity = quantity.toIntOrNull() ?: invoice.quantity,
+                        collectedAmount = collectedAmount.toDoubleOrNull().toString() ?: invoice.collectedAmount
+                        // … map other updated fields …
+                    )!!
+                )
+            }) {
+                Text("Save")
+            }
+        }
+    }
+}
+

@@ -1,5 +1,6 @@
 package com.example.myservice.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -84,5 +85,9 @@ class SingleInvoiceViewModel(
         savedStateHandle.get<String>("invoiceId")?.let { invoiceId ->
             loadInvoice(invoiceId)
         }
+    }
+
+    fun updateInvoice(updatedInvoice: Invoice) {
+        Log.d("SHAKIL", updatedInvoice.toString())
     }
 }
