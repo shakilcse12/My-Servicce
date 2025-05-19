@@ -1,6 +1,7 @@
 package com.example.myservice.network
 
 import CreateInvoiceRequest
+import UpdateInvoiceRequest
 import com.example.myservice.data.constants.Api
 import com.example.myservice.data.model.AuthResponse
 import com.example.myservice.data.model.CollectionResponse
@@ -53,6 +54,13 @@ interface InvoiceService {
 
     @POST(Api.Endpoints.INVOICE_COLLECT)
     suspend fun collectInvoiceBySR(@Body invoiceCollectionReq: InvoiceCollectionReq): Response<SRCollectionResponse>
+
+
+    @PUT(Api.Endpoints.INVOICE_UPDATE)
+    suspend fun updateInvoice(
+        @Path("invoiceId") invoiceId: String,
+        @Body request: UpdateInvoiceRequest
+    ): Response<InvoiceResponseSingle>
 
     /*@GET("invoices/{id}")
     suspend fun getInvoice(@Path("id") invoiceId: String): Response<Invoice>

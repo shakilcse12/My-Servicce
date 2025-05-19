@@ -1,6 +1,7 @@
 package com.example.myservice.data.repository
 
 import CreateInvoiceRequest
+import UpdateInvoiceRequest
 import com.example.myservice.data.model.CollectionResponse
 import com.example.myservice.data.model.InvoiceBySrAndDateRangeReq
 import com.example.myservice.data.model.InvoiceCollectionReq
@@ -49,5 +50,9 @@ class InvoiceRepository(private val invoiceService: InvoiceService) {
 
     suspend fun collectInvoiceBySR(req: InvoiceCollectionReq) : Response<SRCollectionResponse> {
         return invoiceService.collectInvoiceBySR(req)
+    }
+
+    suspend fun updateInvoiceById(id: String, req: UpdateInvoiceRequest) : Response<InvoiceResponseSingle> {
+        return invoiceService.updateInvoice(id, req)
     }
 }

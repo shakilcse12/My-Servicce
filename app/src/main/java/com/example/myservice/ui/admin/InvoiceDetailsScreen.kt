@@ -1,4 +1,6 @@
 package com.example.myservice.ui.admin
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +44,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -55,6 +58,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.res.painterResource
+import com.example.myservice.R
+import java.time.LocalDate
+import com.example.myservice.ui.components.DatePickerDialog
+import convertDateFormat
+import java.time.format.DateTimeFormatter
+import com.example.myservice.ui.components.DatePickerField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,6 +132,7 @@ fun InvoiceDetailsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 EditInvoiceSheet(
+                    viewModel = viewModel,
                     invoice = invoice,
                     onDismiss = { showEditSheet = false },
                     onSave = { updated ->
@@ -258,6 +269,121 @@ private fun ErrorMessage(error: String, onRetry: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditInvoiceSheet(
+    viewModel: SingleInvoiceViewModel,
+    invoice: Invoice?,
+    onDismiss: () -> Unit,
+    onSave: (Invoice) -> Unit
+) {
+    // Local editable state
+    var businessName by remember { mutableStateOf(invoice?.party?.businessName.orEmpty()) }
+    var unitPrice by remember { mutableStateOf(invoice?.unitPrice.toString()) }
+    var quantity by remember { mutableStateOf(invoice?.quantity.toString()) }
+    var collectedAmount by remember { mutableStateOf(invoice?.collectedAmount.toString()) }
+    var invoiceDate by remember { mutableStateOf(invoice?.date ?: LocalDate.now().toString()) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Edit Invoice",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, "Close")
+            }
+        }
+
+        OutlinedTextField(
+            value = unitPrice,
+            onValueChange = { unitPrice = it },
+            label = { Text("Unit Price") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            leadingIcon = { Text("৳") }
+        )
+
+        OutlinedTextField(
+            value = quantity,
+            onValueChange = { quantity = it },
+            label = { Text("Quantity") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+
+        /*OutlinedTextField(
+            value = collectedAmount,
+            onValueChange = { collectedAmount = it },
+            label = { Text("Collected Amount") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            leadingIcon = { Text("৳") }
+        )*/
+
+        DatePickerField(
+            selectedDate = LocalDate.parse(invoiceDate)
+                .format(DateTimeFormatter.ofPattern("dd MMM, yyyy")),
+            onDateSelected = { invoiceDate = it },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Error message
+        viewModel.updateError?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        // Save button at bottom
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp)
+        ) {
+            FilledTonalButton(
+                onClick = {
+                    onSave(
+                        invoice?.copy(
+                            party = invoice.party.copy(businessName = businessName),
+                            unitPrice = (unitPrice.toDoubleOrNull() ?: invoice.unitPrice).toString(),
+                            quantity = quantity.toIntOrNull() ?: invoice.quantity,
+                            collectedAmount = collectedAmount.toDoubleOrNull().toString() ?: invoice.collectedAmount,
+                            date = invoiceDate
+                        )!!
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !viewModel.updateLoading
+            ) {
+                if (viewModel.updateLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Save Changes", modifier = Modifier.padding(vertical = 8.dp))
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditInvoiceSheet2(
     invoice: Invoice?,
     onDismiss: () -> Unit,
     onSave: (Invoice) -> Unit
@@ -355,4 +481,8 @@ fun EditInvoiceSheet(
         }
     }
 }
+
+// Helper extension to parse String → LocalDate
+private fun String.toLocalDate(): LocalDate? =
+    runCatching { LocalDate.parse(this) }.getOrNull()
 

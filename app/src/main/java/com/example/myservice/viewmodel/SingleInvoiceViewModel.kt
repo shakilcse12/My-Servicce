@@ -1,7 +1,10 @@
 package com.example.myservice.viewmodel
 
+import UpdateInvoiceRequest
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
@@ -29,6 +32,42 @@ class SingleInvoiceViewModel(
 
     private val _srName = MutableLiveData<String?>()
     val srName: LiveData<String?> = _srName
+
+    // Add new state variables for edit invoice functionality
+    var showEditSheet by mutableStateOf(false)
+    var updateLoading by mutableStateOf(false)
+    var updateError by mutableStateOf<String?>(null)
+
+    fun updateInvoice(
+        updatedInvoice: Invoice
+    ) {
+        Log.d("SHAKIL", updatedInvoice.toString())
+        viewModelScope.launch {
+            updateLoading = true
+            updateError = null
+            try {
+                Log.d("SHAKIL", "now api will get called")
+                val response = invoiceRepository.updateInvoiceById(
+                    updatedInvoice.id.toString(),
+                    UpdateInvoiceRequest(updatedInvoice.unitPrice.toDouble(), updatedInvoice.quantity, updatedInvoice.date)
+                )
+                Log.d("SHAKIL", "now api ended... called")
+                if (response.isSuccessful) {
+                    Log.d("SHAKIL", response.body().toString())
+                    // Refresh data
+                    showEditSheet = false
+                    refresh()
+                } else {
+                    updateError = response.message()
+                }
+            } catch (e: Exception) {
+                Log.d("SHAKIL", e.toString())
+                updateError = e.localizedMessage
+            } finally {
+                updateLoading = false
+            }
+        }
+    }
 
     /**
      * Public entry point: kicks off the lookup
@@ -87,7 +126,7 @@ class SingleInvoiceViewModel(
         }
     }
 
-    fun updateInvoice(updatedInvoice: Invoice) {
+    /*fun updateInvoice(updatedInvoice: Invoice) {
         Log.d("SHAKIL", updatedInvoice.toString())
-    }
+    }*/
 }

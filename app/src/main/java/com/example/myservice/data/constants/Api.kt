@@ -12,6 +12,7 @@ object Api {
         const val INVOICES = "api/sales"
         const val INVOICE_BY_SR = "api/sr/party-wise-collection"
         const val INVOICE_DETAILS = "api/sales/{invoiceId}"
+        const val INVOICE_UPDATE = "api/updateSales/{invoiceId}"
         const val INVOICE_CREATE = "api/sales/create"
         const val INVOICE_COLLECT = "api/collection/create"
         const val PRODUCTS = "api/products"
