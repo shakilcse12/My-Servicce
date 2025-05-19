@@ -69,7 +69,7 @@ fun LoginScreen(
             if (state.isLoading) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
             } else {
-                Text("Login for Essie and Olivia")
+                Text("Login")
             }
         }
 
