@@ -1,27 +1,22 @@
 package com.example.myservice.viewmodel
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myservice.data.model.Invoice
 import com.example.myservice.data.model.InvoiceBySrAndDateRangeReq
 import com.example.myservice.data.model.InvoiceCollectionReq
 import com.example.myservice.data.model.InvoiceCollectionResponse
 import com.example.myservice.data.model.SR
 import com.example.myservice.data.repository.InvoiceRepository
-import convertDateFormat
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 class InvoiceCollection(
     private val repository: InvoiceRepository
@@ -40,8 +35,6 @@ class InvoiceCollection(
 
     private val _loading = mutableStateOf(false)
     val loading: Boolean get() = _loading.value
-
-    //var selectedStartDate by mutableStateOf<String?>(null)
 
     var selectedEndDate by mutableStateOf<String?>(null)
 
@@ -87,7 +80,7 @@ class InvoiceCollection(
                         _srs.addAll(it.data ?: emptyList())
                     }
                 }
-                Log.d("SHAKIL", srs.toString());
+                Log.d("SHAKIL", srs.toString())
                 //_uiState.update { it.copy(srs = srs, srsLoading = false) }
             } catch (e: Exception) {
                 //_uiState.update { it.copy(srsError = e.message, srsLoading = false) }
@@ -125,7 +118,7 @@ class InvoiceCollection(
 
 
     fun loadInvoices() {
-        Log.d("SHAKIL", "LOAD INVOICE collection IS GETTING CALLED");
+        Log.d("SHAKIL", "LOAD INVOICE collection IS GETTING CALLED")
         //val state = _uiState.value
 
         if (selectedSR != null && selectedStartDate != null && selectedEndDate != null) {
@@ -134,7 +127,7 @@ class InvoiceCollection(
                 try {
                     val response = repository.getInvoiceBySrAndDateRange(
                         InvoiceBySrAndDateRangeReq(
-                            srId = selectedSR!!.id ?: throw Exception("SR not selected"),
+                            srId = selectedSR!!.id,
                             startDate = selectedStartDate.toString(),
                             endDate = selectedEndDate.toString(),
                         )
@@ -145,7 +138,7 @@ class InvoiceCollection(
                             _invoices.addAll(it.data ?: emptyList())
                         }
                         updateAvailableParties()
-                        clearSearch()
+                        //clearSearch()
                     }
                 } catch (e: Exception) {
                     _toastMessage.value = "Error loading invoices: ${e.message}"
@@ -180,31 +173,44 @@ class InvoiceCollection(
                         collectionDate = collectionDateBySR
                     )
                 )
-                Log.d("SHAKIL", response.toString())
-                if (response.isSuccessful) {
-                    response.body()?.let { collectionResult ->
-                        _toastMessage.value = collectionResult.message
-                    } ?: run {
-                        _toastMessage.value = "Invoice collected successfully"
-                    }
-                    Log.d("SHAKIL", response.toString())
+                //Log.d("SHAKIL", "raw response:  $response")
 
-                    loadInvoices() // Refresh the list after collection
+                if (response.isSuccessful) {
+                    // 2xx: response.body() is non-null
+                    val body = response.body()!!
+                    _toastMessage.value =
+                        if (!body.success) body.message
+                        else "Invoice collected successfully. ${body.message}"
+                    loadInvoices()
                 } else {
-                    _toastMessage.value = "Failed to collect invoice: ${response.message()}"
-                    //_uiState.update { it.copy(error = "Failed to collect invoice") }
+                    // non-2xx: parse errorBody
+                    val errorJson = response.errorBody()?.string()
+                    val errorMsg = try {
+                        // Using Gson; adjust if you use Moshi or kotlinx.serialization
+                        val adapter = Gson().getAdapter(InvoiceCollectionError::class.java)
+                        val err = adapter.fromJson(errorJson)
+                        err.message ?: "Unknown error"
+                    } catch (e: Exception) {
+                        "Failed to parse error: ${response.message()}"
+                    }
+                    _toastMessage.value = errorMsg
+                    //Log.d("SHAKIL", "parsed error message: $errorMsg")
                 }
             } catch (e: Exception) {
-                _toastMessage.value = "Error: ${e.message}"
-                //_uiState.update { it.copy(error = e.message) }
+                _toastMessage.value = "Error: ${e.localizedMessage}"
             }
         }
-
     }
+
 
     fun clearToastMessage() {
         _toastMessage.value = null
     }
 
 }
+
+data class InvoiceCollectionError(
+    val success: Boolean,
+    val message: String?
+)
 
