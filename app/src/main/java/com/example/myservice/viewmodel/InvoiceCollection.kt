@@ -112,13 +112,8 @@ class InvoiceCollection(
     }
 
 
-
-
-
-
-
     fun loadInvoices() {
-        Log.d("SHAKIL", "LOAD INVOICE collection IS GETTING CALLED")
+        //Log.d("SHAKIL", "LOAD INVOICE collection IS GETTING CALLED")
         //val state = _uiState.value
 
         if (selectedSR != null && selectedStartDate != null && selectedEndDate != null) {
@@ -142,7 +137,7 @@ class InvoiceCollection(
                     }
                 } catch (e: Exception) {
                     _toastMessage.value = "Error loading invoices: ${e.message}"
-                    Log.e("InvoiceCollection", "Error loading invoices", e)
+                    //Log.e("InvoiceCollection", "Error loading invoices", e)
                 } finally {
                     _loading.value = false
                 }
@@ -152,6 +147,7 @@ class InvoiceCollection(
             return
         }
     }
+
     // Clear search functionality
     fun clearSearch() {
         partySearchQuery = ""
