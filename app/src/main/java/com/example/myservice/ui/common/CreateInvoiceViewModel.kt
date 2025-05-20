@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myservice.data.repository.InvoiceRepository
-import convertDateFormat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -34,6 +33,7 @@ class CreateInvoiceViewModel(
                 _uiState.update {
                     it.copy(
                         parties = parties.map { p -> DropdownItem(p.id, p.businessName) },
+                        filteredParties = parties.map { p -> DropdownItem(p.id, p.businessName) },
                         loadingParties = false
                     )
                 }
@@ -104,9 +104,9 @@ class CreateInvoiceViewModel(
     }
 
 
-    fun select(it: DropdownItem) {
-        _uiState.update { state -> state.copy(selectedParty = it) }
-    }
+    /*fun select(it: DropdownItem) {
+        //_uiState.update { state -> state.copy(selectedParty = it) }
+    }*/
 
     fun selectProduct(it: DropdownItem) {
         _uiState.update { state -> state.copy(selectedProduct = it) }
@@ -127,6 +127,33 @@ class CreateInvoiceViewModel(
     fun updateDate(value: String) {
         _uiState.update { state -> state.copy(date = value) }
     }
+
+    // for search field of party
+
+    fun updatePartySearch(query: String) {
+        _uiState.update { state ->
+            state.copy(
+                partySearchQuery = query,
+                filteredParties = filterParties(state.parties, query))
+        }
+    }
+
+    private fun filterParties(parties: List<DropdownItem>, query: String): List<DropdownItem> {
+        return if (query.isEmpty()) {
+            parties
+        } else {
+            parties.filter {
+                it.name.contains(query, ignoreCase = true)
+            }
+        }
+    }
+
+    fun select(party: DropdownItem?) { // Make parameter nullable
+        Log.d("SHAKIL", party.toString())
+        _uiState.update { state ->
+            state.copy(selectedParty = party)
+        }
+    }
 }
 
 data class CreateInvoiceState(
@@ -144,6 +171,8 @@ data class CreateInvoiceState(
     val productsError: String? = null,
     val isSubmitting: Boolean = false,
     val isSuccess: Boolean = false,
+    val partySearchQuery: String = "",
+    val filteredParties: List<DropdownItem> = emptyList(),
     val errorMessage: String? = null
 ) {
     val isFormValid: Boolean
