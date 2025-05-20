@@ -26,6 +26,8 @@ import com.example.myservice.viewmodel.AdminViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import androidx.compose.material.icons.filled.CalendarToday
+import com.example.myservice.ui.components.DatePickerField
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,7 +107,9 @@ fun CreateInvoiceScreen(
             )
 
             DatePickerField(
-                selectedDate = state.date,
+                labelText = "Invoice Date",
+                selectedDate = LocalDate.parse(state.date)
+                    .format(DateTimeFormatter.ofPattern("dd MMM, yyyy")),
                 onDateSelected = { viewModel.updateDate(it) },
                 modifier = Modifier.fillMaxWidth()
             )

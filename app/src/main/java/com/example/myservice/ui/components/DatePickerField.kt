@@ -29,6 +29,7 @@ import java.time.format.DateTimeFormatter
 @SuppressLint("NewApi")
 @Composable
 fun DatePickerField(
+    labelText: String,
     selectedDate: String,
     onDateSelected: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -47,7 +48,7 @@ fun DatePickerField(
             value = selectedDate,
             onValueChange = {}, // Not directly editable
             readOnly = true,    // Mark as read-only
-            label = { Text("Select Invoice Date") },
+            label = { Text(labelText) },
             // Add a trailing icon as a visual cue that it's clickable/interactive
             trailingIcon = {
                 Icon(
@@ -68,7 +69,7 @@ fun DatePickerField(
                 .matchParentSize() // Makes this Box cover the OutlinedTextField
                 .clickable(
                     // Indicate the purpose of the click clearly
-                    onClickLabel = "Select Collection Date",
+                    onClickLabel = labelText,
                     onClick = { showDatePicker = true }, // Action to show the dialog
                     // Disable ripple effect for the transparent overlay itself
                     interactionSource = remember { MutableInteractionSource() },

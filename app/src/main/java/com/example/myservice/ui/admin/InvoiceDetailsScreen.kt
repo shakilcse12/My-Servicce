@@ -330,6 +330,7 @@ fun EditInvoiceSheet(
         )*/
 
         DatePickerField(
+            labelText = "Select Invoice Date",
             selectedDate = LocalDate.parse(invoiceDate)
                 .format(DateTimeFormatter.ofPattern("dd MMM, yyyy")),
             onDateSelected = { invoiceDate = it },

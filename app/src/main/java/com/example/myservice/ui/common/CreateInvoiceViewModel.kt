@@ -2,6 +2,7 @@ package com.example.myservice.ui.common
 
 // CreateInvoiceViewModel.kt
 import CreateInvoiceRequest
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myservice.data.repository.InvoiceRepository
@@ -81,7 +82,7 @@ class CreateInvoiceViewModel(
                         unitPrice = _uiState.value.unitPrice.toDouble(),
                         quantity = _uiState.value.totalCount.toInt(),
                         collectedAmount = _uiState.value.collectedMoney.toDouble(),
-                        date = convertDateFormat(_uiState.value.date).toString()
+                        date = (_uiState.value.date)
                     )
                 )
                 _uiState.update {
@@ -136,8 +137,7 @@ data class CreateInvoiceState(
     val unitPrice: String = "",
     val totalCount: String = "",
     val collectedMoney: String = "0",
-    val date: String = LocalDate.parse(LocalDate.now().format(DateTimeFormatter.ISO_DATE))
-        .format(DateTimeFormatter.ofPattern("dd MMM, yyyy")),
+    val date: String = (LocalDate.now().format(DateTimeFormatter.ISO_DATE)),
     val loadingParties: Boolean = false,
     val loadingProducts: Boolean = false,
     val partiesError: String? = null,
