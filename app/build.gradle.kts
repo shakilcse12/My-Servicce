@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.compose.testing)
 
 
     // Testing

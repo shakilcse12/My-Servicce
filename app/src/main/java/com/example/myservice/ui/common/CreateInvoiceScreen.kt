@@ -28,8 +28,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import com.example.myservice.ui.components.DatePickerField
 import kotlin.reflect.KFunction1
+import com.example.myservice.ui.components.SearchablePartyDropdown
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateInvoiceScreen(
     onSuccess: () -> Unit,
@@ -62,8 +63,9 @@ fun CreateInvoiceScreen(
         Box(
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize()
-                .imePadding() // Add this for keyboard handling
+                .imePadding() // Add keyboard insets padding
+                .windowInsetsPadding(WindowInsets.ime) // Handle window insets
+                .imeNestedScroll() // Enable nested scroll with IME
         ) {
             Column(
                 modifier = Modifier
@@ -71,23 +73,23 @@ fun CreateInvoiceScreen(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                // Party Search Field
-                SearchablePartyDropdown(
-                    label = "Search Party",
-                    searchQuery = state.partySearchQuery,
-                    onSearchQueryChanged = viewModel::updatePartySearch,
-                    items = state.filteredParties,
-                    selectedItem = state.selectedParty,
-                    onItemSelected = viewModel::select,
-                    loading = state.loadingParties,
-                    error = state.partiesError,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            // Party Search Field
+            SearchablePartyDropdown(
+                label = "Search Party",
+                searchQuery = state.partySearchQuery,
+                onSearchQueryChanged = viewModel::updatePartySearch,
+                items = state.filteredParties,
+                selectedItem = state.selectedParty,
+                onItemSelected = viewModel::select,
+                loading = state.loadingParties,
+                error = state.partiesError,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-                // Party Dropdown
-                /*DropdownMenuField(
+            // Party Dropdown
+            /*DropdownMenuField(
                 label = "Select Party",
                 items = state.parties,
                 selectedItem = state.selectedParty,
@@ -96,192 +98,76 @@ fun CreateInvoiceScreen(
                 error = state.partiesError
             )*/
 
-                // Product Dropdown
-                DropdownMenuField(
-                    label = "Select Product",
-                    items = state.products,
-                    selectedItem = state.selectedProduct,
-                    onItemSelected = { viewModel.selectProduct(it) },
-                    loading = state.loadingProducts,
-                    error = state.productsError
-                )
+            // Product Dropdown
+            DropdownMenuField(
+                label = "Select Product",
+                items = state.products,
+                selectedItem = state.selectedProduct,
+                onItemSelected = { viewModel.selectProduct(it) },
+                loading = state.loadingProducts,
+                error = state.productsError
+            )
 
-                NumberInputField(
-                    label = "Unit Price",
-                    value = state.unitPrice,
-                    onValueChange = { viewModel.updateUnitPrice(it) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+            NumberInputField(
+                label = "Unit Price",
+                value = state.unitPrice,
+                onValueChange = { viewModel.updateUnitPrice(it) },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                NumberInputField(
-                    label = "Total Count",
-                    value = state.totalCount,
-                    onValueChange = { viewModel.updateTotalCount(it) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+            NumberInputField(
+                label = "Total Count",
+                value = state.totalCount,
+                onValueChange = { viewModel.updateTotalCount(it) },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                NumberInputField(
-                    label = "Advance amount",
-                    value = state.collectedMoney,
-                    onValueChange = { viewModel.updateCollectedMoney(it) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+            NumberInputField(
+                label = "Advance amount",
+                value = state.collectedMoney,
+                onValueChange = { viewModel.updateCollectedMoney(it) },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                DatePickerField(
-                    labelText = "Invoice Date",
-                    selectedDate = LocalDate.parse(state.date)
-                        .format(DateTimeFormatter.ofPattern("dd MMM, yyyy")),
-                    onDateSelected = { viewModel.updateDate(it) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+            DatePickerField(
+                labelText = "Invoice Date",
+                selectedDate = LocalDate.parse(state.date)
+                    .format(DateTimeFormatter.ofPattern("dd MMM, yyyy")),
+                onDateSelected = { viewModel.updateDate(it) },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                Button(
-                    onClick = { viewModel.createInvoice() },
-                    enabled = state.isFormValid && !state.isSubmitting,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
-                    if (state.isSubmitting) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
-                    } else {
-                        Text("Create Invoice")
-                    }
-                }
-
-                state.errorMessage?.let {
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-        }
-
-        LaunchedEffect(state.isSuccess) {
-            if (state.isSuccess) {
-                onSuccess()
-            }
-        }
-    }
-}
-
-// New composable for searchable dropdown
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchablePartyDropdown(
-    label: String,
-    searchQuery: String,
-    onSearchQueryChanged: (String) -> Unit,
-    items: List<DropdownItem>,
-    selectedItem: DropdownItem?,
-    onItemSelected: (DropdownItem?) -> Unit, // Allow null,
-    loading: Boolean,
-    error: String?,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(modifier = modifier.padding(vertical = 8.dp)) {
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = it && !loading },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = {
-                    onSearchQueryChanged(it)
-                    if (!expanded) expanded = true
-                },
-                label = { Text(label) },
+            Button(
+                onClick = { viewModel.createInvoice() },
+                enabled = state.isFormValid && !state.isSubmitting,
                 modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-                trailingIcon = {
-                    Row {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(
-                                onClick = {
-                                    onSearchQueryChanged("")
-                                    onItemSelected(null)
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Clear"
-                                )
-                            }
-                        }
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                    }
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search"
-                    )
-                },
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                singleLine = true
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded && !loading,
-                onDismissRequest = { expanded = false }
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
             ) {
-                if (loading) {
-                    DropdownMenuItem(
-                        text = {
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        },
-                        onClick = {}
-                    )
+                if (state.isSubmitting) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
                 } else {
-                    if (items.isEmpty()) {
-                        DropdownMenuItem(
-                            text = { Text("No parties found") },
-                            onClick = {}
-                        )
-                    } else {
-                        items.forEach { item ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = item.name,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                },
-                                onClick = {
-                                    onItemSelected(item)
-                                    onSearchQueryChanged(item.name)
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
+                    Text("Create Invoice")
                 }
             }
-        }
 
-        error?.let {
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-            )
+            state.errorMessage?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        }
+    }
+
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            onSuccess()
         }
     }
 }
-
-
+}
 
 @OptIn(ExperimentalMaterial3Api::class) // Needed for ExposedDropdownMenuBox
 @Composable

@@ -11,6 +11,7 @@ media3CommonKtx = "1.6.0"
 runtimeLivedata = "1.7.8"
 materialIconsExtended = "1.6.3"
 composeMaterial = "1.4.1"
+composeTesting = "1.0.0-alpha04"
 
 [libraries]
 # Core
@@ -41,6 +42,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 androidx-compose-material = { group = "androidx.wear.compose", name = "compose-material", version.ref = "composeMaterial" }
+androidx-compose-testing = { group = "androidx.xr.compose", name = "compose-testing", version.ref = "composeTesting" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

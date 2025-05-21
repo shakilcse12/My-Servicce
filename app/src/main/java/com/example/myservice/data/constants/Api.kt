@@ -1,7 +1,7 @@
 package com.example.myservice.data.constants
 
 object Api {
-    const val BASE_URL = "http://192.168.1.102:8000/"
+    const val BASE_URL = "http://192.168.10.248:8000/"
     const val BASE_URL3 = "http://192.168.18.10:8000/"
     const val BASE_URL2 = "https://deeptechcaresolution.com/"
     const val BASE_URL_AVD = "http://10.0.2.2:8000/"

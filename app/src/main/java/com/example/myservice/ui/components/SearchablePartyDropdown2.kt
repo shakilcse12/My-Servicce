@@ -1,13 +1,11 @@
-package com.example.myservice.ui.components
-
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -22,49 +20,30 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.myservice.ui.common.DropdownItem
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
-// New composable for searchable dropdown
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchablePartyDropdown(
+fun SearchablePartyDropdown2(
     label: String,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
     items: List<DropdownItem>,
     selectedItem: DropdownItem?,
-    onItemSelected: (DropdownItem?) -> Unit,
+    onItemSelected: (DropdownItem?) -> Unit, // Allow null,
     loading: Boolean,
     error: String?,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    //var textFieldValue by remember { mutableStateOf(TextFieldValue(text = searchQuery)) }
-    //var isSelectionInProgress by remember { mutableStateOf(false) } // Track selection state
-
-    // Sync text field value with searchQuery from parent
-    /*LaunchedEffect(searchQuery) {
-        if (textFieldValue.text != searchQuery) {
-            textFieldValue = TextFieldValue(
-                text = searchQuery,
-                selection = TextRange(searchQuery.length) // Move cursor to end
-            )
-            isSelectionInProgress = false // Reset flag after update
-        }
-    }*/
 
     Column(modifier = modifier.padding(vertical = 8.dp)) {
         ExposedDropdownMenuBox(
@@ -115,7 +94,7 @@ fun SearchablePartyDropdown(
                 onDismissRequest = { expanded = false },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 328.dp)
+                    .heightIn(max = 200.dp) // Limit maximum height
             ) {
                 if (loading) {
                     DropdownMenuItem(
@@ -123,17 +102,27 @@ fun SearchablePartyDropdown(
                             Box(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center
-                            ) { CircularProgressIndicator() }
+                            ) {
+                                CircularProgressIndicator()
+                            }
                         },
                         onClick = {}
                     )
                 } else {
                     if (items.isEmpty()) {
-                        DropdownMenuItem({ Text("No parties found") }, onClick = {})
+                        DropdownMenuItem(
+                            text = { Text("No parties found") },
+                            onClick = {}
+                        )
                     } else {
                         items.forEach { item ->
                             DropdownMenuItem(
-                                text = { Text(item.name, Modifier.fillMaxWidth()) },
+                                text = {
+                                    Text(
+                                        text = item.name,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                },
                                 onClick = {
                                     onItemSelected(item)
                                     onSearchQueryChanged(item.name)

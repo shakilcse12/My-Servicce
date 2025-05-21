@@ -29,7 +29,7 @@ object RetrofitInstance {
             .build()
 
         retrofit = Retrofit.Builder()
-            .baseUrl(Api.BASE_URL2)
+            .baseUrl(Api.BASE_URL)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
