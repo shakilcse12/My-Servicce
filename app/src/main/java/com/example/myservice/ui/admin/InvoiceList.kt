@@ -37,8 +37,7 @@ fun InvoiceList(
     LazyColumn(
         state = listState,
         modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp),
+            .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(invoices.value) { invoice ->
