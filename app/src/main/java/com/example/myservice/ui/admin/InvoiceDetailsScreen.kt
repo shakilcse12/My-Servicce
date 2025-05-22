@@ -158,12 +158,11 @@ private fun InvoiceDetailContent(invoice: Invoice, srName: String?) {
         SectionCard(title = "Invoice Info") {
             InfoRow("Invoice ID", invoice.invoiceId.toString())
             formatDate(invoice.date)?.let { InfoRow("Invoice Date", it) }
-            InfoRow("Created At", formatDateTime(invoice.createdAt))
             InfoRow("Created By (SR)", srName ?: "Loading...")
         }
 
-        SectionCard(title = "Customer") {
-            InfoRow("Business", invoice.party?.businessName ?: "-")
+        SectionCard(title = "Party") {
+            InfoRow("Name", invoice.party?.businessName ?: "-")
             InfoRow("Owner", invoice.party?.ownerName ?: "-")
             InfoRow("Address", invoice.party?.officeAddress ?: "-")
             InfoRow("Phone", invoice.party?.phoneNo ?: "-")
@@ -176,7 +175,7 @@ private fun InvoiceDetailContent(invoice: Invoice, srName: String?) {
             InfoRow("Total Payable", "৳${invoice.totalPayableAmount}")
         }
 
-        SectionCard(title = "Payment") {
+        SectionCard(title = "Collection Info") {
             InfoRow("Collected", "৳${invoice.collectedAmount}")
             InfoRow("Remaining", "৳${invoice.remainingAmount}")
         }
@@ -185,8 +184,9 @@ private fun InvoiceDetailContent(invoice: Invoice, srName: String?) {
             title = "Timestamps",
             background = MaterialTheme.colorScheme.secondaryContainer
         ) {
+            InfoRow("Created At", formatDateTime(invoice.createdAt))
             InfoRow("Last Updated", formatDateTime(invoice.updatedAt))
-            InfoRow("UTC Logged", formatUtcTimestamp(invoice.updatedAt))
+            //InfoRow("UTC Logged", formatUtcTimestamp(invoice.updatedAt))
         }
     }
 }

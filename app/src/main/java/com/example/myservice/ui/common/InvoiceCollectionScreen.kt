@@ -66,6 +66,7 @@ import androidx.wear.compose.material.ContentAlpha
 import com.example.myservice.data.model.InvoiceCollectionResponse
 import com.example.myservice.ui.components.DateFilterButton
 import com.example.myservice.ui.components.DatePickerDialog
+import com.example.myservice.ui.components.InvoiceItemCollection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,12 +117,14 @@ fun InvoiceCollectionScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 0.dp)
                 .fillMaxSize()
         ) {
 
             // Replace PartySearchField with
             PartySearchWithDropdown(viewModel)
+
+            Spacer(Modifier.height(16.dp))
             // Filter Section
             FilterSection(
                 viewModel = viewModel,
@@ -163,10 +166,10 @@ fun InvoiceCollectionScreen(
                             modifier = Modifier.fillMaxSize()
                                 .weight(1F),
                             state = listState,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             items(viewModel.filteredInvoices) { invoice ->
-                                InvoiceItem(
+                                InvoiceItemCollection(
                                     invoice = invoice,
                                     onCollect = { viewModel.updateSelectedInvoiceForCollection(invoice) }
                                 )
@@ -185,6 +188,8 @@ fun InvoiceCollectionScreen(
                     }
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
         }
     }
 
@@ -223,7 +228,7 @@ private fun PartySearchWithDropdown(viewModel: InvoiceCollection) {
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 0.dp),
             value = viewModel.partySearchQuery,
             onValueChange = {
                 viewModel.partySearchQuery = it
@@ -282,7 +287,7 @@ fun InvoiceItem(invoice: InvoiceCollectionResponse, onCollect: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(0.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -418,7 +423,7 @@ private fun FilterSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp), // Reduced vertical padding
+            .padding(horizontal = 0.dp, vertical = 0.dp), // Reduced vertical padding
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Party Filter
@@ -431,24 +436,26 @@ private fun FilterSection(
         // Date Range Filter
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("From", style = MaterialTheme.typography.bodyMedium)
-
-            DateFilterButton(
-                label = "Start Date",
-                date = viewModel.selectedStartDate,
-                onClick = onStartDateSelected,
-            )
-
-            Text("To", style = MaterialTheme.typography.bodyMedium)
-
-            DateFilterButton(
-                label = "End Date",
-                date = viewModel.selectedEndDate,
-                onClick = onEndDateSelected,
-            )
+            Column {
+                Text("From", style = MaterialTheme.typography.labelSmall)
+                DateFilterButton(
+                    label = "Start Date",
+                    date = viewModel.selectedStartDate,
+                    onClick = onStartDateSelected
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text("To", style = MaterialTheme.typography.labelSmall)
+                DateFilterButton(
+                    label = "End Date",
+                    date = viewModel.selectedEndDate,
+                    onClick = onEndDateSelected
+                )
+            }
         }
     }
 }
@@ -595,42 +602,4 @@ private fun SRDropDown(
             }
         }
     }
-}
-
-@Composable
-private fun DateFilterButton2(
-    label: String,
-    date: String?,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick
-    ) {
-        Text(text = date?.let {
-            LocalDate.parse(it).format(DateTimeFormatter.ofPattern("dd MMM, yyyy"))
-        } ?: label)
-    }
-}
-
-// Extension function for String to LocalDate conversion
-fun String?.toLocalDate(): LocalDate? = this?.let {
-    try {
-        LocalDate.parse(it)
-    } catch (e: Exception) {
-        null
-    }
-}
-
-// Add this for currency formatting
-class NumberTransformation : VisualTransformation {
-    override fun filter(text: AnnotatedString): TransformedText {
-        return TransformedText(
-            text = AnnotatedString(text.text.formatAsCurrency()),
-            offsetMapping = OffsetMapping.Identity
-        )
-    }
-}
-
-fun String.formatAsCurrency(): String {
-    return if (isNotEmpty()) "₹$this" else ""
 }
