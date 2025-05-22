@@ -197,7 +197,25 @@ private fun FilterSection(
                     onClick = onStartDateSelected
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            // Middle Column with stats
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Invoice count row
+                Text(
+                    text = viewModel.filteredInvoices.value.size.toString(),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                // Total collection row
+                Text(
+                    text = "৳${viewModel.filteredInvoices.value.sumOf {
+                        it.totalPayableAmount.toDoubleOrNull() ?: 0.0
+                    }.toInt()}",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Column {
                 Text("To", style = MaterialTheme.typography.labelSmall)
                 DateFilterButton(

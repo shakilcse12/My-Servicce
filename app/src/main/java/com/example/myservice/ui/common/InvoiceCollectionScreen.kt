@@ -67,6 +67,8 @@ import com.example.myservice.data.model.InvoiceCollectionResponse
 import com.example.myservice.ui.components.DateFilterButton
 import com.example.myservice.ui.components.DatePickerDialog
 import com.example.myservice.ui.components.InvoiceItemCollection
+import com.example.myservice.ui.components.InvoiceSummaryCard
+import com.example.myservice.ui.components.InvoiceSummaryHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,6 +153,16 @@ fun InvoiceCollectionScreen(
                 },
                 onDismiss = { showEndDatePicker = false }
             )
+
+            Spacer(Modifier.height(8.dp))
+
+            /*// Add stats row here
+            InvoiceSummaryCard(
+                invoiceCount = viewModel.filteredInvoices.size,
+                totalCollectionAmount = viewModel.filteredInvoices.sumOf {
+                    it.totalCollectionAmount.toDoubleOrNull() ?: 0.0
+                }
+            )*/
 
             Spacer(Modifier.height(8.dp))
             // Update the when block in InvoiceCollectionScreen
@@ -281,48 +293,6 @@ private fun PartySearchWithDropdown(viewModel: InvoiceCollection) {
     }
 }
 
-// Updated InvoiceItem composable
-@Composable
-fun InvoiceItem(invoice: InvoiceCollectionResponse, onCollect: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(0.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Invoice #${invoice.id}",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = "Business: ${invoice.businessName}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "Amount: ${invoice.totalInvoiceAmount}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Button(
-                onClick = onCollect,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Collect")
-            }
-        }
-    }
-}
-
 // Add this new CollectionDialog composable
 @Composable
 private fun CollectionDialog(
@@ -447,7 +417,26 @@ private fun FilterSection(
                     onClick = onStartDateSelected
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            // Middle Column with stats
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Invoice count row
+                Text(
+                    text = viewModel.filteredInvoices.size.toString(),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                // Total collection row
+                Text(
+                    text = "৳${viewModel.filteredInvoices.sumOf {
+                        it.totalCollectionAmount.toDoubleOrNull() ?: 0.0
+                    }.toInt()}",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
             Column {
                 Text("To", style = MaterialTheme.typography.labelSmall)
                 DateFilterButton(
