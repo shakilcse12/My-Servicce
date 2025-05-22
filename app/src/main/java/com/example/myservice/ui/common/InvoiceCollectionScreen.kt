@@ -64,6 +64,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.wear.compose.material.ContentAlpha
 import com.example.myservice.data.model.InvoiceCollectionResponse
+import com.example.myservice.ui.components.DateFilterButton
 import com.example.myservice.ui.components.DatePickerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -597,7 +598,7 @@ private fun SRDropDown(
 }
 
 @Composable
-private fun DateFilterButton(
+private fun DateFilterButton2(
     label: String,
     date: String?,
     onClick: () -> Unit

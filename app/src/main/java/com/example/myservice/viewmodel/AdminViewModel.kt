@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.myservice.data.model.Invoice
 import com.example.myservice.data.model.Party
 import com.example.myservice.data.repository.InvoiceRepository
+import com.example.myservice.ui.common.DropdownItem
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -39,8 +40,68 @@ class AdminViewModel (
 
     var selectedEndDate by mutableStateOf<String?>(null)
 
+    val dropdownItems: List<DropdownItem> get() = parties.map { it.toDropdownItem() }
+
+    val filteredDropdownItems by derivedStateOf {
+        if (searchQuery.isBlank()) {
+            dropdownItems
+        } else {
+            dropdownItems.filter {
+                it.name.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    var selectedDropdownItem by mutableStateOf<DropdownItem?>(null)
+        private set
+
+
+    var searchQuery by mutableStateOf("")
+    var selectedPartyItem by mutableStateOf<Party?>(null)
+    /*val filteredPartyItems by derivedStateOf {
+        if (searchQuery.isBlank()) {
+            parties
+        } else {
+            parties.filter {
+                it.businessName.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }*/
+
+    var isPartyLoading by mutableStateOf(false)
+    var partyError by mutableStateOf<String?>(null)
+
+
     val filteredInvoices = derivedStateOf {
-        val currentParty = selectedParty
+        val query = searchQuery.trim()
+        val startDate = selectedStartDate?.toLocalDateOrNull()
+        val endDate = selectedEndDate?.toLocalDateOrNull()
+
+        _invoices.filter { invoice ->
+            val invoiceParty = parties.find { it.id == invoice.partyId }
+            val nameMatch = if (query.isNotEmpty()) {
+                invoiceParty?.businessName?.contains(query, ignoreCase = true) == true
+            } else {
+                true
+            }
+
+            val dateMatch = when {
+                startDate != null && endDate != null ->
+                    invoice.date.toLocalDateOrNull()!! in startDate..endDate
+                startDate != null ->
+                    invoice.date.toLocalDateOrNull()?.isAfter(startDate) ?: false
+                endDate != null ->
+                    invoice.date.toLocalDateOrNull()?.isBefore(endDate) ?: false
+                else -> true
+            }
+
+            nameMatch && dateMatch
+        }
+    }
+
+
+    /*val filteredInvoices = derivedStateOf {
+        val currentParty = selectedPartyItem
         val startDate = selectedStartDate?.toLocalDateOrNull()
         val endDate = selectedEndDate?.toLocalDateOrNull()
 
@@ -57,12 +118,16 @@ class AdminViewModel (
             }
             partyMatch && dateMatch
         }
-    }
+    }*/
 
     // --- Add functions to update the filter states ---
-    fun updateSelectedParty(party: Party?) {
+    fun updateSelectedDropdownItem(item: DropdownItem?) {
+        selectedDropdownItem = item
+        val party = item?.toParty()
         selectedParty = party
+        selectedPartyItem = party // ✅ Ensures filteredInvoices gets updated
     }
+
 
     fun updateSelectedStartDate(date: String?) {
         // Optional: Add validation if needed
@@ -92,7 +157,45 @@ class AdminViewModel (
         loadParties()
     }
 
+    fun refresh() {
+        if (parties.isEmpty()) {
+            loadParties()
+        }
+        checkForNewInvoices()
+    }
+
+
     private fun loadParties() {
+        viewModelScope.launch {
+            isPartyLoading = true
+            partyError = null
+            try {
+                val response = invoiceRepository.getParties()
+                if (response.isSuccessful) {
+                    response.body()?.let { partyResponse ->
+                        if (partyResponse.success) {
+                            _parties.clear()
+                            partyResponse.parties.let { party ->
+                                _parties.addAll(party)
+                            }
+                        } else {
+                            partyError = "Something went wrong!!! party response success false." //partyResponse.message
+                        }
+                    }
+                } else {
+                    partyError = "Failed to load parties: ${response.code()}"
+                }
+            } catch (e: Exception) {
+                Log.e("AdminViewModel", "Error loading parties", e)
+                partyError = "Error loading parties: ${e.localizedMessage}"
+            } finally {
+                isPartyLoading = false
+            }
+        }
+    }
+
+
+    /*private fun loadParties() {
         viewModelScope.launch {
             try {
                 val response = invoiceRepository.getParties()
@@ -110,7 +213,7 @@ class AdminViewModel (
                 Log.e("AdminViewModel", "Error loading parties", e)
             }
         }
-    }
+    }*/
 
     /*fun refreshInvoiceList() {
         loadAllInvoices()
@@ -158,7 +261,7 @@ class AdminViewModel (
         }
     }
 
-    fun checkForNewInvoices2() {
+    /*fun checkForNewInvoices2() {
         Log.d("SHAKIL", "yep this luanched is getting called");
         viewModelScope.launch {
             try {
@@ -190,7 +293,7 @@ class AdminViewModel (
                 Log.e("AdminViewModel", "Error checking new invoices", e)
             }
         }
-    }
+    }*/
 
 
 
@@ -259,6 +362,15 @@ class AdminViewModel (
         }
     }
     */
+private fun Party.toDropdownItem(): DropdownItem {
+    return DropdownItem(id = this.id ?: -1, name = this.businessName ?: "")
+}
+
+    private fun DropdownItem.toParty(): Party? {
+        return parties.find { it.id == this.id }
+    }
+
+
 }
 
 // Helper extensions for date handling

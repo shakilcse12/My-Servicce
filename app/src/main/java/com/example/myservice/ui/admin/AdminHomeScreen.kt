@@ -16,6 +16,7 @@ import com.example.myservice.data.model.Party
 import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.ui.components.DatePickerDialog
 import com.example.myservice.ui.components.DateFilterButton
+import com.example.myservice.ui.components.SearchablePartyDropdown
 import com.example.myservice.viewmodel.AdminViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -59,7 +60,7 @@ fun AdminHomeScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.checkForNewInvoices()
+        viewModel.refresh() // this will load all the parties and check for new invoices
         onScroll(true)
     }
 
@@ -95,7 +96,7 @@ fun AdminHomeScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp) // consistent horizontal padding
+                .padding(horizontal = 16.dp, vertical = 0.dp) // consistent horizontal padding
         ) {
             val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = viewModel.loading)
 
@@ -162,14 +163,26 @@ private fun FilterSection(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp),
+            .padding(top = 0.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        PartyDropdown(
+        SearchablePartyDropdown(
+            label = "Select Party",
+            searchQuery = viewModel.searchQuery,
+            onSearchQueryChanged = { viewModel.searchQuery = it },
+            items = viewModel.filteredDropdownItems,
+            selectedItem = viewModel.selectedDropdownItem,
+            onItemSelected = { viewModel.updateSelectedDropdownItem(it) },
+            loading = viewModel.isPartyLoading,
+            error = viewModel.partyError
+        )
+
+
+        /*PartyDropdown(
             parties = viewModel.parties,
             selectedParty = viewModel.selectedParty,
             onPartySelected = { viewModel.selectedParty = it }
-        )
+        )*/
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -197,7 +210,15 @@ private fun FilterSection(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+fun String?.toLocalDate(): LocalDate? = this?.let {
+    try {
+        LocalDate.parse(it)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+/*@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PartyDropdown(
     parties: List<Party>,
@@ -264,12 +285,5 @@ private fun DateFilterButton(
             } ?: label
         )
     }
-}
+}*/
 
-fun String?.toLocalDate(): LocalDate? = this?.let {
-    try {
-        LocalDate.parse(it)
-    } catch (e: Exception) {
-        null
-    }
-}
