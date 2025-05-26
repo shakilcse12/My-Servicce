@@ -1,7 +1,6 @@
 package com.example.myservice.viewmodel
 
 import android.util.Log
-import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -14,8 +13,9 @@ import com.example.myservice.data.model.Party
 import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.ui.common.DropdownItem
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
+import toDropdownItem
+import toLocalDateOrNull
+import toParty
 
 // AdminViewModel.kt
 class AdminViewModel (
@@ -40,7 +40,7 @@ class AdminViewModel (
 
     var selectedEndDate by mutableStateOf<String?>(null)
 
-    val dropdownItems: List<DropdownItem> get() = parties.map { it.toDropdownItem() }
+    private val dropdownItems: List<DropdownItem> get() = parties.map { it.toDropdownItem() }
 
     val filteredDropdownItems by derivedStateOf {
         if (searchQuery.isBlank()) {
@@ -53,11 +53,10 @@ class AdminViewModel (
     }
 
     var selectedDropdownItem by mutableStateOf<DropdownItem?>(null)
-        private set
 
 
     var searchQuery by mutableStateOf("")
-    var selectedPartyItem by mutableStateOf<Party?>(null)
+    private var selectedPartyItem by mutableStateOf<Party?>(null)
     /*val filteredPartyItems by derivedStateOf {
         if (searchQuery.isBlank()) {
             parties
@@ -88,10 +87,13 @@ class AdminViewModel (
             val dateMatch = when {
                 startDate != null && endDate != null ->
                     invoice.date.toLocalDateOrNull()!! in startDate..endDate
+
                 startDate != null ->
                     invoice.date.toLocalDateOrNull()?.isAfter(startDate) ?: false
+
                 endDate != null ->
                     invoice.date.toLocalDateOrNull()?.isBefore(endDate) ?: false
+
                 else -> true
             }
 
@@ -99,31 +101,10 @@ class AdminViewModel (
         }
     }
 
-
-    /*val filteredInvoices = derivedStateOf {
-        val currentParty = selectedPartyItem
-        val startDate = selectedStartDate?.toLocalDateOrNull()
-        val endDate = selectedEndDate?.toLocalDateOrNull()
-
-        _invoices.filter { invoice ->
-            val partyMatch = currentParty?.let { invoice.partyId.toString() == it.id.toString() } ?: true
-            val dateMatch = when {
-                startDate != null && endDate != null ->
-                    invoice.date.toLocalDateOrNull()!! in startDate..endDate
-                startDate != null ->
-                    invoice.date.toLocalDateOrNull()?.isAfter(startDate) ?: false
-                endDate != null ->
-                    invoice.date.toLocalDateOrNull()?.isBefore(endDate) ?: false
-                else -> true
-            }
-            partyMatch && dateMatch
-        }
-    }*/
-
     // --- Add functions to update the filter states ---
     fun updateSelectedDropdownItem(item: DropdownItem?) {
         selectedDropdownItem = item
-        val party = item?.toParty()
+        val party = item?.toParty(parties)
         selectedParty = party
         selectedPartyItem = party // ✅ Ensures filteredInvoices gets updated
     }
@@ -164,7 +145,6 @@ class AdminViewModel (
         checkForNewInvoices()
     }
 
-
     private fun loadParties() {
         viewModelScope.launch {
             isPartyLoading = true
@@ -179,7 +159,8 @@ class AdminViewModel (
                                 _parties.addAll(party)
                             }
                         } else {
-                            partyError = "Something went wrong!!! party response success false." //partyResponse.message
+                            partyError =
+                                "Something went wrong!!! party response success false." //partyResponse.message
                         }
                     }
                 } else {
@@ -194,30 +175,6 @@ class AdminViewModel (
         }
     }
 
-
-    /*private fun loadParties() {
-        viewModelScope.launch {
-            try {
-                val response = invoiceRepository.getParties()
-                if (response.isSuccessful) {
-                    response.body()?.let { partyResponse ->
-                        if (partyResponse.success) {
-                            _parties.clear()
-                            partyResponse.parties.let { party ->
-                                _parties.addAll(party)
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("AdminViewModel", "Error loading parties", e)
-            }
-        }
-    }*/
-
-    /*fun refreshInvoiceList() {
-        loadAllInvoices()
-    }*/
     //refresh invoice list
     fun checkForNewInvoices() {
         Log.d("SHAKIL", "checkForNewInvoices() called")
@@ -261,42 +218,6 @@ class AdminViewModel (
         }
     }
 
-    /*fun checkForNewInvoices2() {
-        Log.d("SHAKIL", "yep this luanched is getting called");
-        viewModelScope.launch {
-            try {
-                val response = invoiceRepository.getAllInvoices()
-                if (response.isSuccessful) {
-                    response.body()?.let { invoiceResponse ->
-                        if (invoiceResponse.success) {
-                            val newList = invoiceResponse.data.orEmpty()
-                            if (newList.isNotEmpty()) {
-                                val currentIds = _invoices.map { it.id }.toSet()
-                                val newInvoices = newList.filter { it.id !in currentIds }
-
-                                // Add new invoices to the top
-                                if (newInvoices.isNotEmpty()) {
-                                    Log.d("SHAKIL", "yep new invoices are found");
-                                    _invoices.addAll(0, newInvoices)
-                                } else {
-                                    Log.d("SHAKIL", "..no new invoices are found");
-                                }
-                            } else {
-                                Log.d("SHAKIL", ".....no new invoices are found may be newList is empty");
-                            }
-                        } else {
-                            Log.d("AdminViewModel", "Check failed: ${invoiceResponse.message}")
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("AdminViewModel", "Error checking new invoices", e)
-            }
-        }
-    }*/
-
-
-
     private fun loadAllInvoices() {
         viewModelScope.launch {
             _loading.value = true
@@ -310,7 +231,10 @@ class AdminViewModel (
                                 _invoices.addAll(data)
                             }
                         } else {
-                            Log.d("AdminViewModel", "Response unsuccessful: ${invoiceResponse.message}")
+                            Log.d(
+                                "AdminViewModel",
+                                "Response unsuccessful: ${invoiceResponse.message}"
+                            )
                         }
                     } ?: run {
                         Log.d("AdminViewModel", "Empty server response")
@@ -324,63 +248,5 @@ class AdminViewModel (
             }
         }
     }
-
-
-/*
-    fun loadInvoiceDetails(invoiceId: String) {
-        viewModelScope.launch {
-            _loading.value = true
-            try {
-                val response = invoiceRepository.getInvoice(invoiceId)
-                if (response.isSuccessful) {
-                    _selectedInvoice.value = response.body()
-                }
-            } catch (e: Exception) {
-                // Handle error
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
-
-    fun updateInvoice(updatedInvoice: Invoice) {
-        viewModelScope.launch {
-            _loading.value = true
-            try {
-                val response = apiService.updateInvoice(updatedInvoice.id, updatedInvoice)
-                if (response.isSuccessful) {
-                    val index = _invoices.indexOfFirst { it.id == updatedInvoice.id }
-                    if (index != -1) {
-                        _invoices[index] = updatedInvoice
-                    }
-                }
-            } catch (e: Exception) {
-                // Handle error
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
-    */
-private fun Party.toDropdownItem(): DropdownItem {
-    return DropdownItem(id = this.id ?: -1, name = this.businessName ?: "")
-}
-
-    private fun DropdownItem.toParty(): Party? {
-        return parties.find { it.id == this.id }
-    }
-
-
-}
-
-// Helper extensions for date handling
-private fun String?.toLocalDateOrNull(): LocalDate? = try {
-    this?.let { LocalDate.parse(it) }
-} catch (e: DateTimeParseException) {
-    null
-}
-
-private fun LocalDate?.isInRange(start: LocalDate, end: LocalDate): Boolean {
-    return this != null && (this >= start && this <= end)
 }
 

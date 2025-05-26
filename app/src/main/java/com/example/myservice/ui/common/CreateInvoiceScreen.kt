@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ import java.time.format.DateTimeFormatter
 import com.example.myservice.ui.components.DatePickerField
 import kotlin.reflect.KFunction1
 import com.example.myservice.ui.components.SearchablePartyDropdown
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -47,8 +49,32 @@ fun CreateInvoiceScreen(
     )
 
     val state by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    // Handle success and snackbar
+    LaunchedEffect(state.showSuccessSnackbar) {
+        if (state.showSuccessSnackbar) {
+            snackbarHostState.showSnackbar(state.snackbarMessage ?: "Success!")
+            viewModel.resetSnackbar()
+            // Optional: Add delay before navigation
+            delay(2000) // 2 seconds
+            onSuccess()
+        }
+    }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    modifier = Modifier.padding(8.dp),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Text(data.visuals.message)
+                }
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text("Create New Invoice") },

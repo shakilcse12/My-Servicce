@@ -60,11 +60,13 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.res.painterResource
 import com.example.myservice.R
+import com.example.myservice.ui.common.DropdownItem
 import java.time.LocalDate
 import com.example.myservice.ui.components.DatePickerDialog
 import convertDateFormat
 import java.time.format.DateTimeFormatter
 import com.example.myservice.ui.components.DatePickerField
+import com.example.myservice.ui.components.SearchablePartyDropdown
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -275,11 +277,27 @@ fun EditInvoiceSheet(
     onSave: (Invoice) -> Unit
 ) {
     // Local editable state
-    var businessName by remember { mutableStateOf(invoice?.party?.businessName.orEmpty()) }
+    //var businessName by remember { mutableStateOf(invoice?.party?.businessName.orEmpty()) }
     var unitPrice by remember { mutableStateOf(invoice?.unitPrice.toString()) }
     var quantity by remember { mutableStateOf(invoice?.quantity.toString()) }
     var collectedAmount by remember { mutableStateOf(invoice?.collectedAmount.toString()) }
     var invoiceDate by remember { mutableStateOf(invoice?.date ?: LocalDate.now().toString()) }
+    // Local editable state
+    val initialBusinessName = invoice?.party?.businessName.orEmpty()
+    var businessName by remember { mutableStateOf(initialBusinessName) }
+
+    // Local state initialization
+    val initialParty = invoice?.party
+    //val initialBusinessName = initialParty?.businessName.orEmpty()
+    val initialSelectedParty = viewModel.parties.firstOrNull { it.id == initialParty?.id }
+
+    // State management
+    LaunchedEffect(initialBusinessName) {
+        viewModel.updatePartySearch(initialBusinessName)
+        initialSelectedParty?.let {
+            viewModel.updateSelectedDropdownItem(DropdownItem(it.id, it.businessName))
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -302,6 +320,22 @@ fun EditInvoiceSheet(
                 Icon(Icons.Default.Close, "Close")
             }
         }
+
+        // Searchable Party Dropdown
+        SearchablePartyDropdown(
+            label = "Select Right Party",
+            searchQuery = viewModel.searchQuery,
+            onSearchQueryChanged = viewModel::updatePartySearch,
+            items = viewModel.filteredDropdownItems,
+            selectedItem = viewModel.selectedDropdownItem,
+            onItemSelected = {
+                viewModel.updateSelectedDropdownItem(it)
+                // Update local state if needed
+            },
+            loading = viewModel.isPartyLoading,
+            error = viewModel.partyError,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         OutlinedTextField(
             value = unitPrice,
@@ -356,14 +390,26 @@ fun EditInvoiceSheet(
         ) {
             FilledTonalButton(
                 onClick = {
+                    val selectedParty = viewModel.parties.firstOrNull {
+                        it.id == viewModel.selectedDropdownItem?.id
+                    } ?: invoice?.party ?: return@FilledTonalButton
+
                     onSave(
                         invoice?.copy(
-                            party = invoice.party.copy(businessName = businessName),
-                            unitPrice = (unitPrice.toDoubleOrNull() ?: invoice.unitPrice).toString(),
-                            quantity = quantity.toIntOrNull() ?: invoice.quantity,
-                            collectedAmount = collectedAmount.toDoubleOrNull().toString() ?: invoice.collectedAmount,
+                            party = selectedParty.copy(
+                                id = viewModel.selectedDropdownItem?.id ?: 3,
+                                businessName = businessName,
+                                // Preserve other values from selected party
+                                ownerName = selectedParty.ownerName ?: "",
+                                officeAddress = selectedParty.officeAddress ?: "",
+                                phoneNo = selectedParty.phoneNo ?: ""
+                            ),
+                            partyId = viewModel.selectedDropdownItem?.id ?: 3,
+                            unitPrice = unitPrice,
+                            quantity = quantity.toInt(),
+                            collectedAmount = collectedAmount,
                             date = invoiceDate
-                        )!!
+                        ) ?: return@FilledTonalButton
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),

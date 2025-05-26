@@ -1,3 +1,5 @@
+import com.example.myservice.data.model.Party
+import com.example.myservice.ui.common.DropdownItem
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -47,4 +49,23 @@ fun formatDateTime(input: String): String {
     } catch (e: Exception) {
         "Invalid date format"
     }
+}
+
+ fun Party.toDropdownItem(): DropdownItem {
+    return DropdownItem(id = this.id ?: -1, name = this.businessName ?: "")
+}
+
+ fun DropdownItem.toParty(parties : List<Party>): Party? {
+    return parties.find { it.id == this.id }
+}
+
+// Helper extensions for date handling
+fun String?.toLocalDateOrNull(): LocalDate? = try {
+    this?.let { LocalDate.parse(it) }
+} catch (e: DateTimeParseException) {
+    null
+}
+
+fun LocalDate?.isInRange(start: LocalDate, end: LocalDate): Boolean {
+    return this != null && (this >= start && this <= end)
 }

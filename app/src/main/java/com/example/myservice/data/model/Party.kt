@@ -10,13 +10,13 @@ data class Party(
     val businessName: String,
 
     @SerializedName("officeAddress")
-    val officeAddress: String,
+    val officeAddress: String?,
 
     @SerializedName("ownerName")
-    val ownerName: String,
+    val ownerName: String?,
 
     @SerializedName("mobileNo")
-    val phoneNo: String,
+    val phoneNo: String?,
 
     @SerializedName("isActive")
     val isActive: Int,

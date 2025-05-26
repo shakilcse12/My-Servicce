@@ -77,20 +77,36 @@ class CreateInvoiceViewModel(
             try {
                 val response = repository.createInvoice(
                     CreateInvoiceRequest(
-                        partyId = _uiState.value.selectedParty?.id ?: throw Exception("Party not selected"),
-                        productId = _uiState.value.selectedProduct?.id ?: throw Exception("Product not selected"),
+                        partyId = _uiState.value.selectedParty?.id
+                            ?: throw Exception("Party not selected"),
+                        productId = _uiState.value.selectedProduct?.id
+                            ?: throw Exception("Product not selected"),
                         unitPrice = _uiState.value.unitPrice.toDouble(),
                         quantity = _uiState.value.totalCount.toInt(),
                         collectedAmount = _uiState.value.collectedMoney.toDouble(),
                         date = (_uiState.value.date)
                     )
                 )
-                _uiState.update {
-                    it.copy(
-                        isSubmitting = false,
-                        isSuccess = true,
-                        errorMessage = null
-                    )
+                if(response.isSuccessful && response.body()?.success == true) {
+                    _uiState.update {
+                        it.copy(
+                            isSubmitting = false,
+                            showSuccessSnackbar = true,
+                            snackbarMessage = "Invoice created successfully!",
+                            isSuccess = true,
+                            errorMessage = null
+                        )
+                    }
+             } else {
+                    _uiState.update {
+                        it.copy(
+                            isSubmitting = false,
+                            showSuccessSnackbar = true,
+                            snackbarMessage = "Something went wrong!!!",
+                            isSuccess = false,
+                            errorMessage = "Something went wrong!!!"
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -100,6 +116,12 @@ class CreateInvoiceViewModel(
                     )
                 }
             }
+        }
+    }
+
+    fun resetSnackbar() {
+        _uiState.update {
+            it.copy(showSuccessSnackbar = false, snackbarMessage = null)
         }
     }
 
@@ -173,6 +195,8 @@ data class CreateInvoiceState(
     val isSuccess: Boolean = false,
     val partySearchQuery: String = "",
     val filteredParties: List<DropdownItem> = emptyList(),
+    val showSuccessSnackbar: Boolean = false,
+    val snackbarMessage: String? = null,
     val errorMessage: String? = null
 ) {
     val isFormValid: Boolean
