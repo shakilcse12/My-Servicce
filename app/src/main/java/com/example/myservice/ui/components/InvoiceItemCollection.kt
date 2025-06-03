@@ -1,17 +1,18 @@
 package com.example.myservice.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.myservice.data.model.InvoiceCollectionResponse
 import formatDate
-import java.text.NumberFormat
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
 fun InvoiceItemCollection(
@@ -21,9 +22,9 @@ fun InvoiceItemCollection(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal =0.dp, vertical =0.dp),
+            .padding(horizontal = 0.dp, vertical = 4.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = MaterialTheme.shapes.medium,
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -32,21 +33,30 @@ fun InvoiceItemCollection(
             // Header: Business Name and Date
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
                 Text(
                     text = invoice.businessName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = formatDate(invoice.invoiceDate).toString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier.align(Alignment.Top)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Amounts and Collect Button
             Row(
@@ -61,12 +71,14 @@ fun InvoiceItemCollection(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Collected: ${(invoice.totalCollectionAmount)}",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF2E7D32)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Approved: ${(invoice.totalCollectionAmountApproved)}",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF0277BD)
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
@@ -74,23 +86,12 @@ fun InvoiceItemCollection(
                     onClick = onCollect,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
-                    )
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("Collect")
                 }
             }
         }
     }
-}
-
-// Helper function to format date
-fun formatDate(date: Date): String {
-    val formatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-    return formatter.format(date)
-}
-
-// Helper function to format currency
-fun formatCurrency(amount: Double): String {
-    val formatter = NumberFormat.getCurrencyInstance()
-    return formatter.format(amount)
 }
