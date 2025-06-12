@@ -79,7 +79,7 @@ private fun InvoiceCard(
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.primary
                     ),
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(

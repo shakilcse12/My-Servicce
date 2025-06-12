@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 class InvoiceCollection(
     private val repository: InvoiceRepository
@@ -29,20 +30,32 @@ class InvoiceCollection(
     val invoices: List<InvoiceCollectionResponse> get() = _invoices
 
     // Filter states
-    var selectedSR by mutableStateOf<SR?>(null)
+    //var selectedSR by mutableStateOf<SR?>(null)
+    var selectedSR: SR? by mutableStateOf(null)
+        private set
+
+    var selectedStartDate: String? by mutableStateOf(null)
+        private set
+
+    var selectedEndDate: String? by mutableStateOf(null)
+        private set
 
     var selectedInvoiceForCollection by mutableStateOf<InvoiceCollectionResponse?>(null)
 
     private val _loading = mutableStateOf(false)
     val loading: Boolean get() = _loading.value
 
-    var selectedEndDate by mutableStateOf<String?>(null)
+    //var selectedEndDate by mutableStateOf<String?>(null)
 
     //var selectedSR by mutableStateOf<String?>(null)
-    var selectedStartDate by mutableStateOf<String?>(null)
+    //var selectedStartDate by mutableStateOf<String?>(null)
 
     private val _toastMessage = MutableStateFlow<String?>(null)
     val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
+
+    // Add network error state
+    private val _networkError = mutableStateOf(false)
+    val networkError get() = _networkError
 
     // Add these new state variables
     var partySearchQuery by mutableStateOf("")
@@ -55,6 +68,18 @@ class InvoiceCollection(
             partySearchQuery.isEmpty() ||
                     it.businessName.contains(partySearchQuery, ignoreCase = true)
         }
+
+    // Track last loaded filters
+    private var lastLoadedSR: SR? = null
+    private var lastLoadedStartDate: String? = null
+    private var lastLoadedEndDate: String? = null
+
+    // Check if filters have changed since last load
+    fun filtersChangedSinceLastLoad(): Boolean {
+        return selectedSR != lastLoadedSR ||
+                selectedStartDate != lastLoadedStartDate ||
+                selectedEndDate != lastLoadedEndDate
+    }
 
     // Update when invoices are loaded
     private fun updateAvailableParties() {
@@ -101,7 +126,7 @@ class InvoiceCollection(
     fun updateSelectedEndDate(date: String?) {
         // Optional: Add validation if needed
         selectedEndDate = date
-        loadInvoices()
+        //loadInvoices()
     }
 
     // Filter management
@@ -113,10 +138,18 @@ class InvoiceCollection(
 
 
     fun loadInvoices() {
-        //Log.d("SHAKIL", "LOAD INVOICE collection IS GETTING CALLED")
+        Log.d("SHAKIL", "LOAD INVOICE collection IS GETTING CALLED")
         //val state = _uiState.value
 
         if (selectedSR != null && selectedStartDate != null && selectedEndDate != null) {
+            if (selectedSR == null || selectedStartDate == null || selectedEndDate == null) {
+                _toastMessage.value = "Please select SR and date range"
+                return
+            }
+
+            _loading.value = true
+            _networkError.value = false
+
             viewModelScope.launch {
 
                 try {
@@ -132,14 +165,27 @@ class InvoiceCollection(
                         response.body()?.let {
                             _invoices.addAll(it.data ?: emptyList())
                         }
+
+                        lastLoadedSR = selectedSR
+                        lastLoadedStartDate = selectedStartDate
+                        lastLoadedEndDate = selectedEndDate
+
                         updateAvailableParties()
                         //clearSearch()
                     }
                 } catch (e: Exception) {
-                    _toastMessage.value = "Error loading invoices: ${e.message}"
+                    if (e is IOException) {
+                        _networkError.value = true
+                        _toastMessage.value = "No internet connection"
+                    } else {
+                        _toastMessage.value = "Error loading invoices: ${e.message}"
+                    }
                     //Log.e("InvoiceCollection", "Error loading invoices", e)
                 } finally {
                     _loading.value = false
+                    if (_networkError.value) {
+                        _invoices.clear()
+                    }
                 }
             }
         } else {

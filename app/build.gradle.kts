@@ -78,6 +78,9 @@ dependencies {
     implementation(libs.androidx.compose.testing)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.ui.android)
+    implementation(libs.androidx.ui.android)
+    implementation(libs.androidx.foundation.layout.android)
 
 
     // Testing

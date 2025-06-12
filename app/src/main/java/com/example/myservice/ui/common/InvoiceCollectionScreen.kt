@@ -1,5 +1,9 @@
 package com.example.myservice.ui.common
+
 import android.annotation.SuppressLint
+import android.content.Context
+import android.net.ConnectivityManager
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,6 +42,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,9 +71,14 @@ import androidx.wear.compose.material.ContentAlpha
 import com.example.myservice.data.model.InvoiceCollectionResponse
 import com.example.myservice.ui.components.DateFilterButton
 import com.example.myservice.ui.components.DatePickerDialog
+import com.example.myservice.ui.components.EmptyState
 import com.example.myservice.ui.components.InvoiceItemCollection
 import com.example.myservice.ui.components.InvoiceSummaryCard
 import com.example.myservice.ui.components.InvoiceSummaryHeader
+import com.example.myservice.ui.components.NetworkErrorBanner
+import com.example.myservice.ui.components.SmartLoadingIndicator
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,12 +104,28 @@ fun InvoiceCollectionScreen(
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
-    // Load invoices when filters change
+    val connectivityManager = remember {
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    }
+    val isOnline by remember(connectivityManager) {
+        derivedStateOf {
+            connectivityManager.activeNetworkInfo?.isConnected == true
+        }
+    }
+    // Track initial load
+    val initialLoadPerformed = remember { mutableStateOf(false) }
+
+    // FIXED: Proper filter change detection
     LaunchedEffect(viewModel.selectedSR, viewModel.selectedStartDate, viewModel.selectedEndDate) {
         if (viewModel.selectedSR != null &&
             viewModel.selectedStartDate != null &&
             viewModel.selectedEndDate != null) {
-            viewModel.loadInvoices()
+
+            // Always load if filters have changed
+            if (viewModel.filtersChangedSinceLastLoad()) {
+                Log.d("SHAKIL", "yep filter change detected");
+                viewModel.loadInvoices()
+            }
         }
     }
 
@@ -122,6 +148,12 @@ fun InvoiceCollectionScreen(
                 .padding(horizontal = 16.dp, vertical = 0.dp)
                 .fillMaxSize()
         ) {
+
+            /*if (viewModel.networkError.value) {
+                NetworkErrorBanner {
+                    if (isOnline) viewModel.loadInvoices()
+                }
+            }*/
 
             // Replace PartySearchField with
             PartySearchWithDropdown(viewModel)
@@ -164,9 +196,31 @@ fun InvoiceCollectionScreen(
                 }
             )*/
 
-            Spacer(Modifier.height(8.dp))
-            // Update the when block in InvoiceCollectionScreen
-            when {
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(viewModel.loading),
+                onRefresh = { if (isOnline) viewModel.loadInvoices() }
+            ) {
+                when {
+                    viewModel.loading -> SmartLoadingIndicator(hasData = viewModel.filteredInvoices.isNotEmpty())
+                    viewModel.filteredInvoices.isEmpty() -> EmptyState()
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            state = listState,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(viewModel.filteredInvoices) { invoice ->
+                                InvoiceItemCollection(
+                                    invoice = invoice,
+                                    onCollect = { viewModel.updateSelectedInvoiceForCollection(invoice) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            /*when {
                 viewModel.loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
@@ -175,7 +229,8 @@ fun InvoiceCollectionScreen(
                 viewModel.filteredInvoices.isNotEmpty() -> {
 
                         LazyColumn(
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .fillMaxSize()
                                 .weight(1F),
                             state = listState,
                             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -199,7 +254,7 @@ fun InvoiceCollectionScreen(
                         Text("No invoices found")
                     }
                 }
-            }
+            }*/
 
             Spacer(Modifier.height(16.dp))
         }
@@ -400,7 +455,7 @@ private fun FilterSection(
         SRDropDown(
             srs = viewModel.srs,
             selectedSR = viewModel.selectedSR,
-            onSRSelected = { viewModel.selectedSR = it }
+            onSRSelected = { viewModel.updateSelectedSR(it) }
         )
 
         // Date Range Filter
@@ -429,9 +484,17 @@ private fun FilterSection(
                 )
                 // Total collection row
                 Text(
-                    text = "৳${viewModel.filteredInvoices.sumOf {
-                        it.totalCollectionAmount.toDoubleOrNull() ?: 0.0
-                    }.toInt()}",
+                    text = "৳${"%,d".format(viewModel.filteredInvoices.sumOf {
+                        it.totalCollectionAmount.toDoubleOrNull()?.toInt() ?: 0
+                    })}",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Text(
+                    text = "৳${"%,d".format(viewModel.filteredInvoices.sumOf {
+                        it.totalCollectionAmountApproved.toDoubleOrNull()?.toInt() ?: 0
+                    })}",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
