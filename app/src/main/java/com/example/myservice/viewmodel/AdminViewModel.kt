@@ -12,6 +12,10 @@ import com.example.myservice.data.model.Invoice
 import com.example.myservice.data.model.Party
 import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.ui.common.DropdownItem
+import com.example.myservice.util.ConnectivityService
+import com.example.myservice.util.user.NetworkUtils
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import toDropdownItem
 import toLocalDateOrNull
@@ -101,6 +105,29 @@ class AdminViewModel (
         }
     }
 
+    // Event for new invoice counts
+    private val _newInvoiceEventChannel = Channel<Int>(Channel.BUFFERED)
+    val newInvoiceEventFlow = _newInvoiceEventChannel.receiveAsFlow()
+
+    private val _offlineEventChannel = Channel<Unit>()
+    val offlineEventFlow = _offlineEventChannel.receiveAsFlow()
+
+    fun handleOffline() {
+        viewModelScope.launch {
+            _offlineEventChannel.send(Unit)
+        }
+    }
+
+    private val _retryEventChannel = Channel<Unit>()
+    val retryEventFlow = _retryEventChannel.receiveAsFlow()
+
+    fun retryLoadInvoices() {
+        Log.d("SHAKIL", "retry function is getting called")
+        initLoad()
+    }
+
+
+
     // --- Add functions to update the filter states ---
     fun updateSelectedDropdownItem(item: DropdownItem?) {
         selectedDropdownItem = item
@@ -134,19 +161,40 @@ class AdminViewModel (
     //private val apiService = RetrofitClient.instance.create(InvoiceApi::class.java)
 
     init {
-        loadAllInvoices()
-        loadParties()
+        Log.d("SHAKIL", "init function is getting called")
+        initLoad()
+    }
+
+    private fun initLoad() {
+        if(filteredInvoices.value.isEmpty()) {
+            viewModelScope.launch {
+                loadAllInvoices()
+            }
+        } else {
+            viewModelScope.launch {
+                checkForNewInvoices()
+            }
+        }
+        if (parties.isEmpty()) {
+            viewModelScope.launch {
+                loadParties()
+            }
+        }
     }
 
     fun refresh() {
         if (parties.isEmpty()) {
-            loadParties()
+            viewModelScope.launch {
+                loadParties()
+            }
         }
-        checkForNewInvoices()
+        viewModelScope.launch {
+            checkForNewInvoices()
+        }
     }
 
-    private fun loadParties() {
-        viewModelScope.launch {
+    private suspend fun loadParties() {
+
             isPartyLoading = true
             partyError = null
             try {
@@ -172,27 +220,27 @@ class AdminViewModel (
             } finally {
                 isPartyLoading = false
             }
-        }
+
     }
 
     //refresh invoice list
-    fun checkForNewInvoices() {
+    private suspend fun checkForNewInvoices() {
         Log.d("SHAKIL", "checkForNewInvoices() called")
-        viewModelScope.launch {
+
             try {
                 val response = invoiceRepository.getAllInvoices()
                 if (!response.isSuccessful) {
                     Log.e("AdminViewModel", "Server error: ${response.code()}")
-                    return@launch
+                    //return@launch
                 }
 
                 val invoiceResponse = response.body()
                 if (invoiceResponse == null || !invoiceResponse.success) {
                     Log.e("AdminViewModel", "API failure or empty body")
-                    return@launch
+                    //return@launch
                 }
 
-                val fetched = invoiceResponse.data.orEmpty()
+                val fetched = invoiceResponse?.data.orEmpty()
 
                 // 1) Build a map of fetched invoices by ID for quick lookup
                 val fetchedById = fetched.associateBy { it.id }
@@ -206,6 +254,10 @@ class AdminViewModel (
                 val existingIds = _invoices.map { it.id }.toSet()
                 val newOnes = fetched.filter { it.id !in existingIds }
 
+                if (newOnes.isNotEmpty()) {
+                    _newInvoiceEventChannel.send(newOnes.size)
+                }
+
                 // 4) Combine: new ones at front, then replaced/unchanged
                 _invoices.clear()
                 _invoices.addAll(0, newOnes)
@@ -215,11 +267,11 @@ class AdminViewModel (
             } catch (e: Exception) {
                 Log.e("AdminViewModel", "Error checking new invoices", e)
             }
-        }
+
     }
 
-    private fun loadAllInvoices() {
-        viewModelScope.launch {
+    private suspend fun loadAllInvoices() {
+
             _loading.value = true
             try {
                 val response = invoiceRepository.getAllInvoices()
@@ -246,7 +298,7 @@ class AdminViewModel (
             } finally {
                 _loading.value = false
             }
-        }
+
     }
 }
 

@@ -17,12 +17,17 @@ import com.example.myservice.data.repository.InvoiceRepository
 import com.example.myservice.ui.components.DatePickerDialog
 import com.example.myservice.ui.components.DateFilterButton
 import com.example.myservice.ui.components.SearchablePartyDropdown
+import com.example.myservice.util.ConnectivityService
+import com.example.myservice.util.NetworkStatus
+import com.example.myservice.util.user.NetworkUtils
 import com.example.myservice.viewmodel.AdminViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,8 +64,23 @@ fun AdminHomeScreen(
         }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val connectivityService = ConnectivityService.get(LocalContext.current)
+    val networkStatus by connectivityService
+        .networkStatus.collectAsState(initial = NetworkStatus.Connected)
+
+    // Listen for new-invoice events
     LaunchedEffect(Unit) {
-        viewModel.refresh() // this will load all the parties and check for new invoices
+        viewModel.newInvoiceEventFlow.collectLatest { count ->
+            snackbarHostState.showSnackbar(
+                message = if (count == 1) "Found 1 new invoice" else "Found $count new invoices",
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        //viewModel.refresh() // this will load all the parties and check for new invoices
         onScroll(true)
     }
 
@@ -85,7 +105,43 @@ fun AdminHomeScreen(
             }
     }
 
+    // code for handling offline scenerios
+    //val isOnline = NetworkUtils.isOnline(LocalContext.current)
+    LaunchedEffect(networkStatus) {
+        if (networkStatus == NetworkStatus.Disconnected) {
+            // Show Snackbar with action "Retry"
+            val result = snackbarHostState.showSnackbar(
+                message = "No internet connection",
+                actionLabel = "Retry",
+                duration = SnackbarDuration.Indefinite
+            )
+
+            if (result == SnackbarResult.ActionPerformed) {
+                coroutineScope.launch {
+                    viewModel.retryLoadInvoices()
+
+                    // Wait for network to come back or timeout
+                    val networkConnected = withTimeoutOrNull(10000L) {
+                        connectivityService.networkStatus.first {
+                            it == NetworkStatus.Connected
+                        }
+                    }
+
+                    // Dismiss current snackbar
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                }
+            }
+        } else {
+            viewModel.refresh()
+            coroutineScope.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                //viewModel.retryLoadInvoices()
+            }
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreateInvoice) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "Create Invoice")
@@ -131,7 +187,7 @@ fun AdminHomeScreen(
 
             SwipeRefresh(
                 state = swipeRefreshState,
-                onRefresh = { viewModel.checkForNewInvoices() },
+                onRefresh = { viewModel.refresh() },
                 modifier = Modifier.fillMaxSize()
             ) {
                 if (viewModel.loading && invoices.isEmpty()) {
